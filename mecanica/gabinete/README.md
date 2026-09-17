@@ -10,8 +10,13 @@ básicas de taller (sierra, taladro, lijadora).
 Gabinete tipo mesa, en MDF, con las 4 pantallas en fila sobre la
 superficie superior y 2 estaciones de control por pantalla al frente.
 
-**Dimensiones generales**: 110 cm (ancho) × 55 cm (alto) × 45 cm (fondo,
+**Dimensiones generales**: 110 cm (ancho) × **75 cm (alto)** × 45 cm (fondo,
 estimado — a ajustar según el espacio real que ocupe la placa FPGA + fuente).
+
+> **Decisión cerrada 2026-09-16**: la altura se subió de 55cm a 75cm
+> para uso de pie (ver [`ergonomia_infantil/README.md`](ergonomia_infantil/README.md)) —
+> un mueble arcade se usa de pie, no sentado, y 55cm obligaba a los
+> niños a agacharse.
 
 ### Vista frontal
 
@@ -32,8 +37,9 @@ estimado — a ajustar según el espacio real que ocupe la placa FPGA + fuente).
 | Cable de uso rudo (para los 8 controles) | ~15 m | ~$2.000/m (estimado) | ~$30.000 | ⚠️ Estimado |
 | Conectores DB9 o similares (1 por control) | 8 | ~$1.500 (estimado) | ~$12.000 | ⚠️ Estimado |
 | Fuente de alimentación 12V (única, para las 4 pantallas) | 1 | ~$40.000 (estimado, según amperaje real necesario) | ~$40.000 | ⚠️ Estimado — depende del consumo real de las 4 pantallas elegidas (sumar sus datasheets) |
+| **Ventilador 12V 40-60mm con rejilla de protección** | 1 | ~$20.000 (estimado) | ~$20.000 | ⚠️ Estimado — ver [`disipacion_termica/README.md`](disipacion_termica/README.md), decisión cerrada 2026-09-16 |
 | Bisagras, tornillos, pintura, lija | — | ~$50.000 (estimado) | ~$50.000 | ⚠️ Estimado |
-| **Total estimado** | | | **≈ $991.000 COP** | (~US$240 aprox., tasa referencial — actualizado con el precio real de pantalla) |
+| **Total estimado** | | | **≈ $1.011.000 COP** | (~US$245 aprox., tasa referencial) |
 
 *(No se incluye la placa Colorlight 5A-75E en este costeo — se asume
 provista por el curso, como las demás carpetas de `hardware/` ya
@@ -83,8 +89,8 @@ Ver [`docs/manejo_errores_y_seguridad.md`](../../docs/manejo_errores_y_seguridad
 | Tema | Carpeta | Hallazgo real más importante |
 |---|---|---|
 | Aprovechamiento de la lámina de MDF | [`plano_de_corte/`](plano_de_corte/README.md) | 1 sola lámina alcanza para las 7 piezas (30.950 de 44.652 cm² disponibles) |
-| Altura y ángulo pensados para niños | [`ergonomia_infantil/`](ergonomia_infantil/README.md) | Los 55 cm actuales asumen uso sentado — si el uso real es de pie (más probable en un mueble arcade), **hay que subir a ~75 cm** |
-| Cálculo de calor y ventilación | [`disipacion_termica/`](disipacion_termica/README.md) | ~22W estimados superan el límite cómodo de ventilación pasiva (~10-15W) — **se recomienda agregar un ventilador de 12V** |
+| Altura y ángulo pensados para niños | [`ergonomia_infantil/`](ergonomia_infantil/README.md) | ✅ Cerrado: altura subida a **75 cm** para uso de pie |
+| Cálculo de calor y ventilación | [`disipacion_termica/`](disipacion_termica/README.md) | ✅ Cerrado: ~22W estimados superan la ventilación pasiva — **se agrega un ventilador de 12V** |
 | Cómo fijar las 4 pantallas | [`montaje_pantallas/`](montaje_pantallas/README.md) | Mantener la carcasa de fábrica de cada pantalla y atornillarla desde atrás — no desmontar el panel |
 | Nombre, colores y gráficas del producto | [`identidad_visual/`](identidad_visual/README.md) | Propuesta de nombre y paleta de colores, pendiente de que el equipo decida |
 
@@ -93,13 +99,11 @@ Ver [`docs/manejo_errores_y_seguridad.md`](../../docs/manejo_errores_y_seguridad
 - [x] Plano de distribución de las 4 pantallas y 8 controles
 - [x] Lista de materiales con precios reales/estimados
 - [x] Plano de corte de la lámina de MDF
-- [x] Análisis de ergonomía infantil (con hallazgo pendiente de decidir)
-- [x] Cálculo de disipación térmica (con recomendación de ventilador)
+- [x] Análisis de ergonomía infantil — **decisión cerrada: 75cm, de pie**
+- [x] Cálculo de disipación térmica — **decisión cerrada: se agrega ventilador 12V**
 - [x] Método de montaje de las pantallas
 - [x] Propuesta de identidad visual
-- [ ] **Decisión pendiente del equipo**: ¿55cm (sentado) o ~75cm (de
-      pie)? Esto obliga a actualizar `vista_frontal.svg`,
-      `vista_interna.svg` y el plano de corte si cambia.
+- [x] Diagramas y plano de corte actualizados con la altura final (75cm)
 - [ ] Ruteo detallado de cableado interno (falta definir largo exacto
       según las dimensiones finales que se decidan)
 - [ ] Cotización final una vez se elija el modelo exacto de pantalla

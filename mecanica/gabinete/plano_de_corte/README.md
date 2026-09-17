@@ -7,27 +7,28 @@ en el BOM principal) para las 7 piezas que forman el gabinete.
 
 ## Piezas necesarias y sus dimensiones
 
-Basado en las cotas del gabinete (110×55×45 cm) definidas en
-[`../README.md`](../README.md):
+**Actualizado 2026-09-16**: altura del gabinete cerrada en **75 cm**
+(uso de pie, ver [`../ergonomia_infantil/README.md`](../ergonomia_infantil/README.md)),
+basado en las cotas 110×75×45 cm definidas en [`../README.md`](../README.md):
 
 | Pieza | Dimensiones (cm) | Área (cm²) | Notas |
 |---|---|---|---|
 | Superior | 110 × 45 | 4.950 | Lleva los recortes de las 4 pantallas, los 8 huecos de botones y la rejilla de ventilación |
 | Inferior | 110 × 45 | 4.950 | Base del gabinete |
-| Frontal | 110 × 55 | 6.050 | Cara visible frontal |
-| Trasera | 110 × 55 | 6.050 | Lleva el recorte de la rejilla trasera y el conector de alimentación |
-| Lateral izquierdo | 45 × 55 | 2.475 | |
-| Lateral derecho | 45 × 55 | 2.475 | |
+| Frontal | 110 × 75 | 8.250 | Cara visible frontal |
+| Trasera | 110 × 75 | 8.250 | Lleva el recorte de la rejilla trasera, el conector de alimentación y el ventilador (ver disipación térmica) |
+| Lateral izquierdo | 45 × 75 | 3.375 | |
+| Lateral derecho | 45 × 75 | 3.375 | |
 | Repisa interna | 100 × 40 | 4.000 | Soporta la FPGA y la fuente, un poco más pequeña que la base para dejar espacio al cableado |
-| **Total** | | **30.950 cm²** | |
+| **Total** | | **37.150 cm²** | |
 
 **Área disponible en la lámina**: 183 cm × 244 cm = **44.652 cm²**.
 
-**Conclusión real**: con 30.950 cm² necesarios contra 44.652 cm²
-disponibles, **una sola lámina alcanza**, dejando ~13.700 cm² de
-sobrante para margen de error de corte (el kerf real de la sierra,
-~3-5mm por corte, se come parte de ese sobrante — no es 100%
-aprovechable, pero hay margen de sobra).
+**Conclusión real (recalculada con la altura de 75cm)**: con 37.150 cm²
+necesarios contra 44.652 cm² disponibles, **una sola lámina TODAVÍA
+alcanza**, pero el margen bajó de ~13.700 a **~7.500 cm² de sobrante**
+— sigue siendo suficiente para el kerf de corte (~3-5mm por corte),
+pero ya no hay tanto margen para errores grandes. Cortar con cuidado.
 
 ## Recomendaciones de corte reales
 

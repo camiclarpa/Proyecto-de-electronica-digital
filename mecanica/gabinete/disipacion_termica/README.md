@@ -49,7 +49,15 @@ para extraer aire caliente por la rejilla trasera.
 |---|---|---|
 | Ventilador 12V 40-60mm con rejilla de protección | 1 | ~$15.000–25.000 (estimado, no verificado en tienda) |
 
-## Pendiente
+## ✅ DECISIÓN CERRADA (2026-09-16)
+
+**Se agrega 1 ventilador de 12V (40-60mm) con rejilla de protección en
+ambos lados**, montado en la rejilla trasera para extraer aire
+caliente. Ya incluido en:
+- [`../README.md`](../README.md) → BOM principal (fila nueva)
+- [`../vista_interna.svg`](../vista_interna.svg) → símbolo del ventilador junto a la rejilla trasera
+
+## Pendiente (ya no bloqueante, son verificaciones futuras)
 - [ ] Confirmar consumo real (datasheet) de la pantalla final elegida
 - [ ] Medir temperatura real dentro de un prototipo antes de dar por
   bueno el diseño (la teoría ayuda, pero la verificación real con un

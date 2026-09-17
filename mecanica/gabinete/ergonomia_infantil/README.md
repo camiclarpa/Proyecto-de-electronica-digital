@@ -54,20 +54,23 @@ límite inferior va a tener la mesa un poco alta).
   **inclinar las pantallas ~15-20°** hacia el usuario (como una consola
   cocktail-cabinet clásica), no dejarlas completamente horizontales.
 
-## Decisión pendiente para el equipo
+## ✅ DECISIÓN CERRADA (2026-09-16)
 
-**[SUPUESTO A CONFIRMAR]**: dado lo anterior, se recomienda **subir la
-altura del gabinete de 55 cm a ~75 cm** (uso de pie) y **agregar una
-inclinación de 15-20° a la superficie de pantallas/controles**. Esto
-afecta directamente:
-- El plano de corte (piezas laterales más altas)
-- La vista frontal/interna ya dibujadas (hay que actualizarlas)
+**Altura del gabinete: 75 cm, para uso de pie.** Se actualizó en:
+- [`../README.md`](../README.md) (dimensiones generales)
+- [`../vista_frontal.svg`](../vista_frontal.svg) y [`../vista_interna.svg`](../vista_interna.svg)
+- [`../plano_de_corte/README.md`](../plano_de_corte/README.md) (piezas Frontal, Trasera y Laterales recalculadas a 75cm de alto)
 
-## Pendiente
-- [ ] Confirmar el rango de edad real del público objetivo
-- [ ] Decidir uso de pie vs. sentado (con banco/silla)
-- [ ] Si se confirma, actualizar `vista_frontal.svg`, `vista_interna.svg`
-  y el plano de corte con la nueva altura
+**La inclinación de 15-20° en las pantallas queda como refinamiento
+futuro, NO bloqueante** — el diseño actual mantiene la superficie plana
+(más simple de construir en una primera versión); se puede agregar
+después sin rehacer el gabinete completo, solo el panel Superior.
+
+## Pendiente (ya no bloqueante, son mejoras futuras)
+- [ ] Confirmar el rango de edad real del público objetivo (sigue
+  siendo un supuesto: 6-10 años)
+- [ ] Evaluar en una v2 la inclinación de 15-20° de la superficie de
+  pantallas/controles
 
 ## Integrantes responsables
 -
