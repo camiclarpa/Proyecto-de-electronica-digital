@@ -24,6 +24,7 @@ completa.
 | 2 | Salida de video del Grupo J | 2026-09-16 | **VGA** (analógica) generada por el FPGA | HDMI (TMDS digital) | El código de timing y el mapa de framebuffers ya asumían VGA; generar 4 salidas HDMI reales requeriría serializadores de alta velocidad que el toolchain open-source del curso soporta mal. La pantalla final (HDMI-only) se resuelve con un convertidor VGA→HDMI externo, barato y real | [`hardware/grupo_J_display/README.md`](../hardware/grupo_J_display/README.md#función-en-el-proyecto) y [`mecanica/gabinete/cotizacion_pantalla.md`](../mecanica/gabinete/cotizacion_pantalla.md) |
 | 3 | Altura del gabinete | 2026-09-16 | **75 cm**, uso de pie | 55 cm (uso sentado) | Los estándares de mobiliario escolar por estatura infantil, aplicados a un mueble de pie (no una mesa con silla), dan ~75cm como altura correcta para el rango de edad objetivo | [`mecanica/gabinete/ergonomia_infantil/README.md`](../mecanica/gabinete/ergonomia_infantil/README.md) |
 | 4 | Disipación térmica del gabinete | 2026-09-16 | **1 ventilador 12V 40-60mm** con rejilla de protección | Convección pasiva únicamente (sin ventilador) | La estimación de consumo (~22W: 4 pantallas + FPGA + fuente) supera el límite práctico de convección pasiva en un gabinete de madera cerrado (~10-15W) | [`mecanica/gabinete/disipacion_termica/README.md`](../mecanica/gabinete/disipacion_termica/README.md) |
+| 11 | Direcciones de memoria de los 10 periféricos + estructura de carpetas de `hardware/` | 2026-09-16 | **Direcciones oficiales confirmadas** (`0x000000`–`0x4FFFFF`, ver [`mapa_memoria.md`](mapa_memoria.md)) + carpetas `diagramas/ rtl/ firmware/` por grupo | Nuestras direcciones propuestas (`0x00000000` en adelante) y un solo `README.md` por grupo | Se confirmaron contra el mapa de memoria real del curso, evitando tener que retrabajar todo el software una vez se validara contra hardware real. La reorganización en subcarpetas separa protocolo/diagrama, RTL simulable (`make sim`) y driver en C, sin perder ningún contenido técnico que ya habíamos documentado nosotros | [`mapa_memoria.md`](mapa_memoria.md) y cada `hardware/grupo_*/README.md` |
 
 ## Supuestos adoptados, sin confirmar formalmente ⚠️
 
@@ -64,10 +65,12 @@ en el README de su grupo de hardware correspondiente:
 
 ## Punto de coordinación activo (no es una decisión, es un riesgo técnico documentado)
 
-**Tamaño del framebuffer (Grupo J ↔ Grupo C ↔ Grupo K)**: un
-framebuffer de 640×480 a color completo pesa ~460 KB, probablemente
-más de lo que cabe en BRAM interna de la FPGA. Ver el detalle y las dos
-opciones reales (bajar resolución o usar la SPI RAM externa del Grupo
-C) en [`hardware/grupo_J_display/README.md`](../hardware/grupo_J_display/README.md#mapa-de-memoria-propuesto--validar-contra-el-decodificador-real-chip_selectv).
+**Tamaño del framebuffer (Grupo J ↔ Grupo C ↔ Grupo K)**: con las
+direcciones oficiales, cada pantalla ahora tiene **128 KB** de ventana
+de framebuffer (antes 16 KB) — mejora el margen, pero un framebuffer de
+640×480 a color completo sigue pesando ~460 KB, todavía más de lo que
+cabe. Ver el detalle y las opciones reales (bajar resolución o usar la
+SPI RAM externa del Grupo C) en
+[`hardware/grupo_J_display/README.md`](../hardware/grupo_J_display/README.md#mapa-de-memoria-propuesto--validar-contra-el-decodificador-real-chip_selectv).
 Esto determina la resolución real de los 4 juegos, así que debe
 resolverse antes de escribir el primer `.c` de cualquier juego.

@@ -1,6 +1,11 @@
-# Grupo D — spi_flash_ctrl.v
+# Grupo D — `perip_spiflash`
 
-Controlador de memoria Flash SPI (sprites y assets de los juegos).
+Controlador de memoria Flash SPI (sprites y assets de los 4 juegos).
+
+> **Direcciones actualizadas 2026-09-16**: se confirmaron contra el
+> mapa de memoria oficial del curso (antes eran un supuesto propio sin
+> validar). Detalle en
+> [`../../docs/decisiones_cerradas.md`](../../docs/decisiones_cerradas.md).
 
 ## Función en el proyecto
 
@@ -10,38 +15,94 @@ lee en modo "usuario" después de que la FPGA ya arrancó, para cargar
 ahí los **datos de los 4 juegos**: sprites, tablas de niveles, paletas
 de color — todo lo que no cambia en tiempo de ejecución.
 
-## Protocolo real
+## Estructura de esta carpeta
 
-SPI modo 0, comandos estándar JEDEC: `0x03` (READ, hasta ~25 MHz),
-`0x0B` (FAST READ, con 1 byte dummy, velocidades mayores), dirección de
-24 bits. Solo lectura es indispensable para este proyecto (no se
-necesita re-programar la flash desde el juego).
-
-## Interfaz esperada (puertos del módulo)
-
-```verilog
-module spi_flash_ctrl (
-    input  wire        clk,
-    input  wire [23:0] addr,
-    output reg  [31:0] data_out,
-    input  wire         req,
-    output reg           busy,
-    output wire cs_n, sclk, mosi,
-    input  wire miso
-);
+```
+grupo_D_spiflash/
+├── README.md                 (este archivo)
+├── diagramas/README.md       — protocolo SPI, máquina de estados, tabla de registros
+├── rtl/
+│   ├── Makefile                — `make sim` para correr la prueba
+│   ├── perip_spiflash.v        — módulo real (FSM SPI modo 0, solo lectura)
+│   └── perip_spiflash_TB.v     — testbench (esclavo SPI simulado)
+└── firmware/
+    ├── spiflash.h                — direcciones + macros de registro
+    └── spiflash.c                — `flash_read`, `cargar_sprites`
 ```
 
-## Mapa de memoria (PROPUESTO — validar contra el decodificador real `chip_select.v`)
+## Protocolo real
 
-| Dirección | Nombre | Lectura/Escritura | Descripción |
+SPI modo 0 (CPOL=0, CPHA=0), comandos estándar JEDEC: `0x03` (READ,
+hasta ~25 MHz) es el implementado; `0x0B` (FAST READ, con 1 byte
+dummy, velocidades mayores) queda documentado como posible mejora
+futura. Solo lectura es indispensable para este proyecto (no se
+necesita re-programar la flash desde el juego). Ver el diagrama
+completo de la transacción en
+[`diagramas/README.md`](diagramas/README.md).
+
+Igual que `perip_spiram` (Grupo C), cada acceso de datos dispara una
+transacción SPI real que tarda varios ciclos de `clk` — el software
+debe sondear el bit `busy` antes de asumir que el dato es válido.
+
+## Tabla de registros (CSR)
+
+Offsets relativos a la base de este periférico. La base real y la
+ventana completa están en
+[`../../docs/mapa_memoria.md`](../../docs/mapa_memoria.md) — **oficial,
+confirmada contra el repositorio del profesor** (antes era un supuesto
+propio sin validar).
+
+| Registro | Offset | R/W | Descripción |
 |---|---|---|---|
-| `0x00030000` – `0x0003FFFF` | SPIFLASH | R (solo lectura) | Assets de los 4 juegos (sprites, niveles, paletas) |
-| `0x0003FFFC` | SPIFLASH_STATUS | R | bit0 = busy |
+| `FLASH_BASE` (datos) | `0x0000` – `0xFFFB` | R (solo lectura) | Ventana de assets de los 4 juegos (sprites, niveles, paletas); cada acceso dispara una transacción SPI completa |
+| `FLASH_STATUS` | `0xFFFC` | R | bit0 = `busy` — 1 mientras dura una transacción SPI en curso |
 
 **Importante**: hay que reservar un área de la flash que NO se solape
 con el bitstream de configuración de la FPGA (normalmente los primeros
 megabytes). Definir el offset real donde empiezan los assets del juego
-una vez se sepa el tamaño del bitstream compilado.
+una vez se sepa el tamaño del bitstream compilado — el offset `addr`
+de este módulo es relativo al INICIO de esa región reservada, no al
+inicio físico del chip de flash.
+
+## Integración en el SoC
+
+`perip_spiflash` recibe **`addr` como offset local** (ya restada la
+base `0x420000`) — el decodificador central del SoC es responsable de:
+1. Comparar la dirección del CPU contra la ventana `0x420000–0x42FFFF`.
+2. Generar `cs = 1` solo cuando la dirección cae en esa ventana.
+3. Conectar `addr = direccion_cpu - 0x420000` al puerto `addr` del
+   módulo (mismo patrón que usa `perip_uart` y `perip_spiram` con sus
+   propias bases).
+
+## Simulación
+
+```bash
+cd rtl
+make sim
+```
+
+Corre el testbench `perip_spiflash_TB.v`: el propio testbench actúa
+como "esclavo SPI falso" — verifica que el header transmitido por
+`mosi` (comando `0x03` + dirección) sea el correcto, entrega un patrón
+conocido por `miso` durante la fase de datos y verifica que el módulo
+lo capture correctamente en `FLASH_DATA`. También verifica que `busy`
+vuelva a 0 al terminar la transacción.
+
+## API en C
+
+Ver [`firmware/spiflash.h`](firmware/spiflash.h) y
+[`firmware/spiflash.c`](firmware/spiflash.c):
+
+```c
+uint32_t flash_read(uint32_t offset);
+void     cargar_sprites(uint32_t offset_flash, uint32_t* destino_ram, int n_palabras);
+```
+
+`flash_read` espera primero a que `busy == 0`, dispara la transacción
+con un primer acceso y vuelve a leer después de esperar a que termine
+(la memoria es externa, no BRAM, así que el dato no está listo en el
+mismo ciclo). `cargar_sprites` es la forma recomendada de usarlo: copia
+un bloque completo a RAM/BRAM una sola vez al iniciar cada juego.
 
 ## Requisitos desde el software (Grupo K)
 - Cada uno de los 4 juegos necesita un "layout" fijo de dónde están sus
@@ -49,82 +110,23 @@ una vez se sepa el tamaño del bitstream compilado.
   flash, tipo mini sistema de archivos, o direcciones fijas acordadas
   de antemano — más simple para un proyecto de este tamaño).
 - Como es de solo lectura y relativamente lenta comparada con BRAM, los
-  sprites se deben cargar UNA VEZ a BRAM/SPIRAM al iniciar cada juego,
-  no leer de flash en cada frame.
-
-## Esqueleto de implementación (mismo patrón que Grupo C, solo lectura)
-
-```verilog
-module spi_flash_ctrl (
-    input  wire        clk, rst,
-    input  wire [23:0] addr,
-    output reg  [31:0] data_out,
-    input  wire        req,
-    output reg         busy,
-    output reg         cs_n, sclk, mosi,
-    input  wire        miso
-);
-    // Igual estructura que spiram_ctrl.v pero SIEMPRE con comando
-    // fijo 0x03 (READ) — nunca 0x02 (WRITE), esta memoria es solo
-    // lectura desde el punto de vista del juego.
-    localparam IDLE=0, XFER=1, DONE=2;
-    reg [1:0] state = IDLE;
-    reg [5:0] bit_count;
-    reg [31:0] shift_out;
-    reg [31:0] shift_in;
-
-    always @(posedge clk) begin
-        if (rst) begin state <= IDLE; cs_n <= 1; busy <= 0; end
-        else case (state)
-            IDLE: if (req) begin
-                cs_n <= 0; busy <= 1;
-                shift_out <= {8'h03, addr};
-                bit_count <= 0; state <= XFER;
-            end
-            XFER: begin
-                sclk <= ~sclk;
-                if (sclk) begin
-                    mosi <= shift_out[31]; shift_out <= {shift_out[30:0], 1'b0};
-                end else begin
-                    shift_in <= {shift_in[30:0], miso};
-                    bit_count <= bit_count + 1;
-                    if (bit_count == 63) state <= DONE; // 32 cmd+addr + 32 datos
-                end
-            end
-            DONE: begin cs_n <= 1; busy <= 0; data_out <= shift_in; state <= IDLE; end
-        endcase
-    end
-endmodule
-```
-
-## API en C para el Grupo K
-
-```c
-// spiflash.h
-#define FLASH_BASE   0x00030000
-#define FLASH_STATUS (*(volatile unsigned int*)0x0003FFFC)
-
-unsigned int flash_read(unsigned int offset) {
-    while (FLASH_STATUS & 0x1) {}
-    return *(volatile unsigned int*)(FLASH_BASE + offset);
-}
-
-// Ejemplo de carga de sprites al iniciar un juego:
-void cargar_sprites(unsigned int offset_flash, unsigned int* destino_ram, int n_palabras) {
-    for (int i = 0; i < n_palabras; i++)
-        destino_ram[i] = flash_read(offset_flash + i*4);
-}
-```
+  sprites se deben cargar UNA VEZ a BRAM/SPIRAM al iniciar cada juego
+  (con `cargar_sprites`), no leer de flash en cada frame.
 
 ## Errores comunes a evitar
 - Leer directamente de flash dentro del bucle de dibujo de cada frame
   (es lenta comparada con BRAM) — siempre copiar los sprites a BRAM/RAM
-  una sola vez al iniciar el juego.
+  una sola vez al iniciar el juego (`cargar_sprites`).
 - Pisar la región del bitstream de configuración por no confirmar el
   offset real donde empiezan los assets.
+- Usar la dirección ABSOLUTA (`0x420000 + offset`) dentro del propio
+  módulo `perip_spiflash.v` — el módulo solo debe conocer el offset; la
+  base la maneja el decodificador central del SoC.
 
 ## Estado
-- [ ] Módulo diseñado
-- [ ] Módulo simulado (testbench)
+- [x] Módulo diseñado
+- [x] Testbench escrito (`perip_spiflash_TB.v`)
+- [ ] Módulo simulado y verificado (correr `make sim`)
 - [ ] Módulo probado en hardware real (Colorlight 5A-75E)
-- [ ] Mapa de registros/memoria documentado (ver arriba)
+- [x] Mapa de registros documentado (offsets arriba, base oficial confirmada)
+- [ ] Offset real de inicio de assets confirmado (una vez se sepa el tamaño del bitstream)

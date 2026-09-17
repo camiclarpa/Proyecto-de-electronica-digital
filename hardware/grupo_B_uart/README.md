@@ -1,104 +1,89 @@
-# Grupo B — uart.v
+# Grupo B — `perip_uart`
 
 Controlador UART (comunicación serial con el exterior / depuración).
+
+> **Direcciones actualizadas 2026-09-16**: se confirmaron contra el
+> mapa de memoria oficial del curso (antes eran un supuesto propio sin
+> validar). Detalle en
+> [`../../docs/decisiones_cerradas.md`](../../docs/decisiones_cerradas.md).
 
 ## Función en el proyecto
 
 Canal de depuración del sistema: permite que el Grupo K imprima
 mensajes de estado/error desde el software (útil para probar cada
 juego sin necesitar la pantalla funcionando todavía) y sirve de puente
-hacia un PC o el ESP32 (como en el ejemplo `femtoriscv` del curso).
+hacia un PC o el ESP32 (como en el ejemplo `femtorv32` del curso).
+
+## Estructura de esta carpeta
+
+```
+grupo_B_uart/
+├── README.md              (este archivo)
+├── diagramas/README.md    — trama UART, diagrama de bloques interno
+├── rtl/
+│   ├── Makefile            — `make sim` para correr la prueba
+│   ├── perip_uart.v         — módulo real (TX + RX + registros)
+│   └── perip_uart_TB.v      — testbench (loopback tx→rx)
+└── firmware/
+    ├── uart.h               — direcciones + macros de registro
+    └── uart.c                — `uart_putc`, `uart_getc`
+```
 
 ## Protocolo real
 
 UART asíncrona estándar: 1 bit de start, 8 bits de datos (LSB primero),
 sin paridad, 1 bit de stop. Velocidad recomendada: **57600 baudios**
 (la misma que usa el ejemplo del curso hacia el puente ESP32; si se
-comunica directo a un PC vía FT232RL, 115200 también es viable).
+comunica directo a un PC vía FT232RL, 115200 también es viable). Ver
+el diagrama de trama en [`diagramas/README.md`](diagramas/README.md).
 
-## Interfaz esperada (puertos del módulo)
+## Tabla de registros (CSR)
 
-```verilog
-module uart #(parameter CLK_FREQ = 25000000, parameter BAUD = 57600) (
-    input  wire       clk,
-    input  wire       rst,
-    output wire       tx,
-    input  wire       rx,
-    input  wire [7:0] tx_data,
-    input  wire        tx_write,   // pulso: iniciar envio de tx_data
-    output wire        tx_busy,
-    output wire [7:0]  rx_data,
-    output wire         rx_valid   // se pone en 1 un ciclo cuando llega un byte nuevo
-);
-```
+Offsets relativos a la base de este periférico. La base real y la
+ventana completa están en
+[`../../docs/mapa_memoria.md`](../../docs/mapa_memoria.md) — **oficial,
+confirmada contra el repositorio del profesor** (antes era un
+supuesto propio sin validar).
 
-## Mapa de memoria (PROPUESTO — validar contra el decodificador real `chip_select.v`)
-
-| Dirección | Nombre | Lectura/Escritura | Descripción |
+| Registro | Offset | R/W | Descripción |
 |---|---|---|---|
-| `0x00010000` | UART_DATA | R/W | Escribir: byte a transmitir. Leer: último byte recibido. |
-| `0x00010004` | UART_STATUS | R | bit0 = tx_busy, bit1 = rx_valid (dato nuevo disponible) |
+| `UART_DATA` | `0x00` | R/W | Escribir: byte a transmitir. Leer: último byte recibido |
+| `UART_STATUS` | `0x04` | R | bit0 = `tx_busy`, bit1 = `rx_valid` (dato nuevo disponible) |
 
-## Requisitos desde el software (Grupo K)
-- Función `uart_putc(char c)`: espera a que `tx_busy==0`, escribe en `UART_DATA`.
-- Función `uart_getc()`: sondea `UART_STATUS.bit1`, si hay dato lee `UART_DATA`.
-- Usado principalmente para `printf`-style de depuración mientras se
-  prueba cada juego antes de tener pantalla real conectada.
+## Integración en el SoC
 
-## Esqueleto de implementación (transmisor, punto de partida real)
+`perip_uart` recibe **`addr` como offset local** (ya restada la base
+`0x400000`) — el decodificador central del SoC es responsable de:
+1. Comparar la dirección del CPU contra la ventana `0x400000–0x40FFFF`.
+2. Generar `cs = 1` solo cuando la dirección cae en esa ventana.
+3. Conectar `addr = direccion_cpu - 0x400000` al puerto `addr` del
+   módulo (ver el ejemplo `perip_blink` del profesor, que usa el mismo
+   patrón con su propia base `0x500000`).
 
-```verilog
-module uart_tx #(parameter CLK_FREQ = 25000000, parameter BAUD = 57600) (
-    input  wire       clk, rst,
-    input  wire [7:0] data,
-    input  wire        write,
-    output reg          busy,
-    output reg          tx
-);
-    localparam integer DIV = CLK_FREQ / BAUD;
-    reg [12:0] clk_count = 0;
-    reg [3:0]  bit_index = 0;
-    reg [9:0]  shift_reg = 10'b1111111111; // reposo = todo en 1
+## Simulación
 
-    always @(posedge clk) begin
-        if (rst) begin
-            tx <= 1'b1; busy <= 0; clk_count <= 0; bit_index <= 0;
-        end else if (write && !busy) begin
-            shift_reg <= {1'b1, data, 1'b0}; // stop, datos LSB-first, start
-            busy <= 1; clk_count <= 0; bit_index <= 0;
-        end else if (busy) begin
-            if (clk_count == DIV-1) begin
-                clk_count <= 0;
-                tx <= shift_reg[0];
-                shift_reg <= {1'b1, shift_reg[9:1]};
-                bit_index <= bit_index + 1;
-                if (bit_index == 9) busy <= 0;
-            end else clk_count <= clk_count + 1;
-        end
-    end
-endmodule
+```bash
+cd rtl
+make sim
 ```
 
-El receptor (`uart_rx`) es el mismo principio al revés: detectar el
-flanco de bajada del bit de start en `rx`, esperar medio periodo de bit
-para muestrear en el centro de cada bit (evita leer justo en el borde,
-donde la señal puede no haberse estabilizado).
+Corre el testbench `perip_uart_TB.v`: escribe un byte en `UART_DATA`,
+dejando que se transmita y se reciba de vuelta por loopback (`tx`
+conectado directo a `rx`), y verifica que el byte recibido coincida.
 
 ## API en C para el Grupo K
 
+Ver [`firmware/uart.h`](firmware/uart.h) y
+[`firmware/uart.c`](firmware/uart.c):
+
 ```c
-// uart.h
-#define UART_DATA   (*(volatile unsigned int*)0x00010000)
-#define UART_STATUS (*(volatile unsigned int*)0x00010004)
-
-void uart_putc(char c) {
-    while (UART_STATUS & 0x1) {} // espera tx_busy == 0
-    UART_DATA = (unsigned int) c;
-}
-
-int uart_getc_available(void) { return UART_STATUS & 0x2; }
-char uart_getc(void) { return (char) UART_DATA; }
+void uart_putc(char c);          // espera tx_busy==0, escribe UART_DATA
+int  uart_getc_available(void);  // consulta rx_valid
+char uart_getc(void);            // lee UART_DATA
 ```
+
+Usado principalmente para `printf`-style de depuración mientras se
+prueba cada juego antes de tener pantalla real conectada.
 
 ## Errores comunes a evitar
 - Calcular mal el divisor de baudios (`DIV`) — si el reloj real de la
@@ -107,9 +92,13 @@ char uart_getc(void) { return (char) UART_DATA; }
   fijar `CLK_FREQ`.
 - Muestrear el bit de start apenas se detecta, sin esperar medio
   periodo — produce lecturas erráticas cerca de los bordes de cada bit.
+- Usar la dirección ABSOLUTA (`0x400000 + offset`) dentro del propio
+  módulo `perip_uart.v` — el módulo solo debe conocer el offset; la
+  base la maneja el decodificador central del SoC.
 
 ## Estado
-- [ ] Módulo diseñado
-- [ ] Módulo simulado (testbench)
+- [x] Módulo diseñado
+- [x] Testbench escrito (`perip_uart_TB.v`)
+- [ ] Módulo simulado y verificado (correr `make sim`)
 - [ ] Módulo probado en hardware real (Colorlight 5A-75E)
-- [ ] Mapa de registros/memoria documentado (ver arriba)
+- [x] Mapa de registros documentado (offsets arriba, base oficial confirmada)

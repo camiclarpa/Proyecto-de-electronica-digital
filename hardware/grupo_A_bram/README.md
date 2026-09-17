@@ -1,6 +1,11 @@
-# Grupo A — bram.v
+# Grupo A — `bram`
 
 Controlador de BRAM interna (memoria de trabajo del CPU RV32I).
+
+> **Dirección actualizada 2026-09-16**: se confirmó contra el mapa de
+> memoria oficial del curso (antes era un supuesto propio sin
+> validar). Detalle en
+> [`../../docs/decisiones_cerradas.md`](../../docs/decisiones_cerradas.md).
 
 ## Función en el proyecto
 
@@ -9,21 +14,54 @@ compilado (el software del Grupo K) mientras se ejecuta, y las
 variables/pila de cada tarea de juego. Toda lectura/escritura del CPU
 que no vaya dirigida a un periférico específico pasa por aquí.
 
-## Interfaz esperada (puertos del módulo)
+## Estructura de esta carpeta
+
+```
+grupo_A_bram/
+├── README.md              (este archivo)
+├── diagramas/README.md    — por qué 4 bancos de 8 bits, ventana vs. BRAM física real
+├── rtl/
+│   ├── Makefile
+│   ├── bram.v               — módulo real (no sigue el patrón perip_ / CSR, ver más abajo)
+│   └── bram_TB.v             — testbench (palabra completa + escritura parcial por byte)
+└── firmware/README.md      — por qué este módulo no tiene driver C
+```
+
+## Por qué no se llama `perip_bram` ni sigue el patrón CSR
+
+A diferencia de los demás módulos de `hardware/`, la BRAM no es un
+periférico con registros de control — es memoria de programa normal.
+Se accede con `LW`/`SW`/`LB`/`SB` directo, como cualquier arreglo de
+C, sin necesitar un protocolo `cs`/`rd`/`wr` de un solo registro a la
+vez. Por eso su interfaz (ver `rtl/bram.v`) es distinta a la del resto.
+
+## Interfaz del módulo
 
 ```verilog
 module bram (
     input  wire        clk,
-    input  wire [15:0] addr,        // direccion de palabra
+    input  wire [19:0] addr,        // direccion de PALABRA (32 bits)
     input  wire [31:0] data_in,
     output reg  [31:0] data_out,
-    input  wire         write_enable,
-    input  wire  [3:0]  byte_enable // escritura parcial (SB/SH del RISC-V)
+    input  wire        write_enable,
+    input  wire [3:0]  byte_enable // escritura parcial (SB/SH del RISC-V)
 );
 ```
 
 - Acceso síncrono (1 ciclo de latencia), como cualquier BRAM de FPGA (Lattice ECP5, bloques de 18 Kbit).
 - Debe soportar escritura por byte (`byte_enable`) porque el compilador de C para RV32I genera instrucciones `SB`/`SH` además de `SW`.
+
+## Ventana de direcciones
+
+| Rango | Tamaño de ventana | R/W | Descripción |
+|---|---|---|---|
+| `0x000000`–`0x3FFFFF` | 4 MB (dirección), NO BRAM física real | R/W | Memoria de trabajo del CPU (código + datos) |
+
+Ver la nota importante sobre ventana de direcciones vs. BRAM física
+real de la FPGA en
+[`diagramas/README.md`](diagramas/README.md#ventana-de-direcciones-vs-bram-física-real-de-la-fpga)
+— 4 MB es el tamaño del espacio de direcciones reservado, no el
+tamaño real de BRAM disponible en el chip.
 
 ## Requisitos desde el software (Grupo K)
 
@@ -32,53 +70,13 @@ module bram (
   compile el primer juego, no adivinar el tamaño de antemano).
 - Debe poder inicializarse con el contenido del programa al configurar
   la FPGA (memoria inicializada desde el bitstream, como ya hace el
-  ejemplo `femtoriscv` del curso vía `init_dpram.ini`).
+  ejemplo `femtorv32` del curso vía `init_dpram.ini`).
 
-## Mapa de memoria (PROPUESTO — validar contra el decodificador real `chip_select.v` del proyecto femtoriscv del curso)
+## Simulación
 
-| Dirección | Nombre | Lectura/Escritura | Descripción |
-|---|---|---|---|
-| `0x00000000` – `0x0000FFFF` | BRAM | R/W | Memoria de trabajo del CPU (código + datos) |
-
-## Esqueleto de implementación (punto de partida real, no pseudocódigo)
-
-```verilog
-module bram (
-    input  wire        clk,
-    input  wire [15:0] addr,
-    input  wire [31:0] data_in,
-    output reg  [31:0] data_out,
-    input  wire        write_enable,
-    input  wire [3:0]  byte_enable
-);
-    reg [7:0] mem0 [0:16383];
-    reg [7:0] mem1 [0:16383];
-    reg [7:0] mem2 [0:16383];
-    reg [7:0] mem3 [0:16383];
-
-    always @(posedge clk) begin
-        if (write_enable) begin
-            if (byte_enable[0]) mem0[addr] <= data_in[7:0];
-            if (byte_enable[1]) mem1[addr] <= data_in[15:8];
-            if (byte_enable[2]) mem2[addr] <= data_in[23:16];
-            if (byte_enable[3]) mem3[addr] <= data_in[31:24];
-        end
-        data_out <= {mem3[addr], mem2[addr], mem1[addr], mem0[addr]};
-    end
-endmodule
-```
-
-Nota: partir la memoria en 4 bancos de 8 bits (uno por byte) es lo que
-permite escribir por byte sin leer-modificar-escribir la palabra
-completa — así funciona de verdad el `SB`/`SH` del RISC-V.
-
-## API en C para el Grupo K
-
-```c
-// bram.h — memoria de trabajo, acceso normal de C (arreglos, punteros)
-// No requiere funciones especiales: el compilador de GCC para RV32I ya
-// genera LW/SW/LB/SB directo sobre estas direcciones porque es memoria
-// mapeada de forma transparente, a diferencia de los periféricos.
+```bash
+cd rtl
+make sim
 ```
 
 ## Errores comunes a evitar
@@ -88,9 +86,12 @@ completa — así funciona de verdad el `SB`/`SH` del RISC-V.
   depurar.
 - No inicializar la memoria con el programa real al sintetizar (sin
   esto, el CPU arranca ejecutando basura).
+- Asumir que caben 4MB reales de BRAM en la FPGA — ver la nota de
+  arriba.
 
 ## Estado
-- [ ] Módulo diseñado
-- [ ] Módulo simulado (testbench)
+- [x] Módulo diseñado
+- [x] Testbench escrito (`bram_TB.v`)
+- [ ] Módulo simulado y verificado (correr `make sim`)
 - [ ] Módulo probado en hardware real (Colorlight 5A-75E)
-- [ ] Mapa de registros/memoria documentado (ver arriba)
+- [x] Ventana de direcciones documentada (oficial, confirmada)

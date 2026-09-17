@@ -1,6 +1,12 @@
-# Grupo J — display_driver.v
+# Grupo J — `display_driver`
 
-Controlador de las 4 salidas de video independientes.
+Controlador de las 4 salidas de video independientes (una por pantalla).
+
+> **Direcciones actualizadas 2026-09-16**: se confirmaron contra el
+> mapa de memoria oficial del curso (antes eran un supuesto propio sin
+> validar) y la ventana por pantalla subió de 16 KB a **128 KB**.
+> Detalle en
+> [`../../docs/decisiones_cerradas.md`](../../docs/decisiones_cerradas.md).
 
 ## Función en el proyecto
 
@@ -16,11 +22,11 @@ pantallas:
 
 | Opción | Qué requiere del FPGA | Riesgo real |
 |---|---|---|
-| **VGA (analógica)** ✅ ELEGIDA | Un contador de timing (ver `vga_timing` más abajo, ya escrito) + un DAC resistivo simple (2-4 resistencias por canal de color) en los pines de salida | Bajo — es el estándar que usan casi todos los cursos universitarios de "Pong/Tetris en FPGA", no necesita IP especial |
+| **VGA (analógica)** ✅ ELEGIDA | Un contador de timing (`vga_timing`, ver [`rtl/vga_timing.v`](rtl/vga_timing.v)) + un DAC resistivo simple (2-4 resistencias por canal de color) en los pines de salida | Bajo — es el estándar que usan casi todos los cursos universitarios de "Pong/Tetris en FPGA", no necesita IP especial |
 | **HDMI (digital, TMDS)** ❌ descartada | 4 transmisores TMDS reales (serializar cada canal a ~250 MHz, 10× el reloj de píxel) — el Colorlight 5A-75E no trae pines diferenciales pensados para esto, y el flujo 100% open-source (Yosys+Nextpnr+Trellis) tiene soporte mucho menos probado para SERDES de alta velocidad que las herramientas propietarias de Lattice | Alto — 4 instancias simultáneas de esto es un proyecto de I+D en sí mismo, no algo razonable en el tiempo del curso |
 
 **Por qué se cierra en VGA:**
-1. El código de timing (`vga_timing`, más abajo) y el mapa de memoria de
+1. El código de timing (`vga_timing`) y el mapa de memoria de
    framebuffers ya están escritos asumiendo VGA — cambiar a HDMI
    implicaría rehacer esta parte desde cero.
 2. Generar 4 salidas HDMI reales requiere 4 serializadores TMDS de alta
@@ -29,7 +35,7 @@ pantallas:
    forma confiable a tiempo.
 3. **El problema de que la pantalla comprada (ELECROW, ver
    [`mecanica/gabinete/cotizacion_pantalla.md`](../../mecanica/gabinete/cotizacion_pantalla.md))
-   solo tenga entrada HDIM se resuelve por fuera del FPGA**: con un
+   solo tenga entrada HDMI se resuelve por fuera del FPGA**: con un
    convertidor activo VGA→HDMI (dispositivo real y barato, ver esa
    cotización), en vez de complicar el diseño de hardware del Grupo J.
 
@@ -37,7 +43,44 @@ Si en el futuro se cambia a pantallas TFT pequeñas por SPI/paralelo
 (ej. tipo ILI9341), el protocolo cambiaría por completo — pero esa no
 es la ruta elegida.
 
-## Protocolo real (asumiendo VGA, 640×480 @ 60 Hz — timing estándar industry)
+## Por qué este módulo NO sigue el patrón CSR simple
+
+A diferencia de los demás periféricos de `hardware/` (UART, I2S, I2C,
+etc.), este grupo mezcla **dos cosas distintas**:
+1. Un generador de timing (`vga_timing`) que sí es puramente lógica de
+   control, sin registros del CPU.
+2. **4 framebuffers**, cada uno una región de **memoria** de 128 KB (el
+   CPU escribe pixel por pixel ahí, como un arreglo) — no un par de
+   registros de control como `blink` o `UART`.
+
+Por eso `framebuffer.v` es análogo al caso de la BRAM (ver
+[`../grupo_A_bram/README.md`](../grupo_A_bram/README.md#por-qué-no-se-llama-perip_bram-ni-sigue-el-patrón-csr)
+y [`../grupo_A_bram/rtl/bram.v`](../grupo_A_bram/rtl/bram.v)): memoria
+real, direccionable con suficientes bits (128 KB = 2^17 bytes), sin
+protocolo `cs`/cola de un solo registro. El nombre de la carpeta en el
+mapa de memoria es `perip_display` solo para efectos de la tabla
+consolidada — el módulo RTL en sí no se llama `perip_display.v` porque
+no es un CSR (ver nota 4 en
+[`../../docs/mapa_memoria.md`](../../docs/mapa_memoria.md)).
+
+## Estructura de esta carpeta
+
+```
+grupo_J_display/
+├── README.md                 (este archivo)
+├── diagramas/README.md       — timing VGA (front porch/sync/back porch), diagrama de bloques
+├── rtl/
+│   ├── Makefile
+│   ├── vga_timing.v            — generador de timing VGA (mismo esqueleto real de siempre)
+│   ├── framebuffer.v            — memoria de framebuffer (128 KB), parametrizable, instanciada 4×
+│   ├── display_driver.v         — top de una pantalla: junta vga_timing + framebuffer
+│   └── display_driver_TB.v      — testbench básico (puerto CPU + timing vivo)
+└── firmware/
+    ├── display.h                — FB1_BASE..FB4_BASE (referencia a framebuffer.h del Grupo K)
+    └── display.c                 — placeholder (la lógica de dibujo vive en el Grupo K)
+```
+
+## Protocolo real (VGA, 640×480 @ 60 Hz — timing estándar industry)
 
 | Parámetro | Horizontal | Vertical |
 |---|---|---|
@@ -51,99 +94,97 @@ Reloj de píxel: **25.175 MHz** (aprox. 25 MHz, generado con un PLL a
 partir del reloj de la placa — el mismo tipo de PLL que ya usa la
 carpeta `pll/` del ejemplo `from-blinker-to-riscv-bruno-levy` del
 repositorio del curso). `HSYNC` y `VSYNC` activos en bajo en esta
-resolución estándar; 3 salidas analógicas o digitales de color
-(R, G, B).
+resolución estándar; 3 salidas de color (R, G, B). Con **4 pantallas**
+se necesitan 4 instancias de `vga_timing` corriendo en paralelo (ver
+diagrama de bloques en
+[`diagramas/README.md`](diagramas/README.md)). Detalle completo del
+timing (front porch/sync/back porch) también en esa carpeta.
 
-Con **4 pantallas** se necesitan 4 instancias de este generador de
-timing corriendo en paralelo (pueden compartir el mismo PLL de 25 MHz
-si están sincronizadas, o tener cada una su propio contador si no).
+## Tabla de ventanas de framebuffer
 
-## Interfaz esperada (puertos del módulo, por cada instancia/pantalla)
+| Nombre | Base | Ventana | Tamaño | R/W |
+|---|---|---|---|---|
+| `FB1_BASE` | `0x00480000` | `0x480000`–`0x49FFFF` | 128 KB | R/W |
+| `FB2_BASE` | `0x004A0000` | `0x4A0000`–`0x4BFFFF` | 128 KB | R/W |
+| `FB3_BASE` | `0x004C0000` | `0x4C0000`–`0x4DFFFF` | 128 KB | R/W |
+| `FB4_BASE` | `0x004E0000` | `0x4E0000`–`0x4FFFFF` | 128 KB | R/W |
 
-```verilog
-module display_driver (
-    input  wire clk_pixel,     // ~25 MHz
-    output wire hsync, vsync,
-    output wire [3:0] r, g, b, // ajustar ancho segun DAC/resistencias reales disponibles
-    output wire [9:0] pixel_x,  // coordenada actual (para que el CPU sepa que dibujar)
-    output wire [9:0] pixel_y,
-    input  wire [11:0] pixel_color // color a mostrar en (pixel_x, pixel_y), desde el framebuffer
-);
+Base del grupo completo: `0x00480000`, ventana total `0x480000`–`0x4FFFFF` (512 KB).
+
+## Nota real importante: el problema del tamaño del framebuffer (SIGUE VIGENTE)
+
+Un framebuffer de 640×480 a color completo (ej. 12 bits/píxel) pesa
+**~460 KB** — con la ventana oficial ahora subida a **128 KB por
+pantalla** (antes 16 KB) hay mucho más margen que antes, pero **sigue
+sin caber un framebuffer completo a resolución máxima** (128 KB < 460
+KB). Opciones reales, sin cambiar:
+(a) usar una resolución mucho más baja tipo los juegos retro reales
+(ej. 160×120 o 256×200, del orden de 20-50 KB según bits/píxel, mucho
+más manejable), o
+(b) guardar el framebuffer en la SPIRAM externa del Grupo C en vez de
+usar solo esta memoria interna.
+**Definir esto sigue siendo uno de los primeros puntos de coordinación
+entre Grupo J, Grupo C y Grupo K** — ver el registro completo en
+[`../../docs/decisiones_cerradas.md`](../../docs/decisiones_cerradas.md#punto-de-coordinación-activo-no-es-una-decisión-es-un-riesgo-técnico-documentado).
+Mientras esto no se cierre, `display_driver.v` usa `FB_WIDTH`/
+`FB_HEIGHT` **provisionales** (256×200 por defecto, ver el módulo) que
+deben ajustarse cuando el equipo decida la resolución final de cada
+juego.
+
+## Integración en el SoC
+
+Cada `display_driver` (uno por pantalla) recibe **`fb_addr_cpu` como
+offset local de PALABRA** (ya restada la base de esa pantalla) — el
+decodificador central del SoC es responsable de:
+1. Comparar la dirección del CPU contra la ventana de 128 KB de la
+   pantalla correspondiente (`0x480000–0x49FFFF` para FB1, y así con
+   cada una).
+2. Generar `fb_write_enable = 1` solo cuando la dirección cae en esa
+   ventana Y la operación es una escritura.
+3. Conectar `fb_addr_cpu = (direccion_cpu - FBn_BASE) >> 2` (offset de
+   palabra de 32 bits) al puerto correspondiente del `display_driver`
+   de esa pantalla — mismo patrón de resta de base que usan los demás
+   grupos (ver
+   [`../grupo_B_uart/README.md`](../grupo_B_uart/README.md#integración-en-el-soc)),
+   pero aquí sobre una ventana de memoria completa, no un solo registro.
+4. El lado de video (`vga_timing` + lectura de `framebuffer`) **no
+   depende del CPU en absoluto** — corre siempre, a su propio reloj de
+   píxel, leyendo lo último que el CPU haya escrito.
+
+## Simulación
+
+```bash
+cd rtl
+make sim
 ```
 
-## Mapa de memoria (PROPUESTO — validar contra el decodificador real `chip_select.v`)
-
-| Dirección | Nombre | Lectura/Escritura | Descripción |
-|---|---|---|---|
-| `0x00090000` – `0x00093FFF` | FB1 | R/W | Framebuffer Pantalla 1 (a dimensionar según resolución real usada por juego, probablemente menor a 640×480 para que quepa en memoria) |
-| `0x00094000` – `0x00097FFF` | FB2 | R/W | Framebuffer Pantalla 2 |
-| `0x00098000` – `0x0009BFFF` | FB3 | R/W | Framebuffer Pantalla 3 |
-| `0x0009C000` – `0x0009FFFF` | FB4 | R/W | Framebuffer Pantalla 4 |
-
-**Nota real importante**: un framebuffer de 640×480 a color completo
-(ej. 12 bits/píxel) pesa ~460 KB — probablemente demasiado para BRAM
-interna de la FPGA. Opciones reales: (a) usar una resolución mucho más
-baja tipo los juegos retro reales (ej. 160×120 u otra bajada, ~28 KB a
-12 bits, mucho más manejable), o (b) guardar el framebuffer en la
-SPIRAM externa del Grupo C en vez de BRAM. **Definir esto es uno de los
-primeros puntos de coordinación entre Grupo J, Grupo C y Grupo K.**
-
-## Requisitos desde el software (Grupo K)
-- Cada juego dibuja a baja resolución (sprites simples: paletas,
-  pelota, invasores, la serpiente, el carrito) — no se necesita alta
-  resolución para ninguno de los 4 juegos.
-- El framebuffer se actualiza por software; el `display_driver` solo lo
-  "escanea" continuamente para generar la señal de video (doble buffer
-  si se quiere evitar parpadeo, a evaluar según recursos disponibles).
-
-## Esqueleto de implementación (generador de timing VGA real)
-
-```verilog
-module vga_timing (
-    input  wire clk_pixel, // 25 MHz real, desde PLL
-    output reg  hsync, vsync,
-    output reg  video_on,   // 1 cuando esta en la zona visible (no en blanking)
-    output reg  [9:0] pixel_x,
-    output reg  [9:0] pixel_y
-);
-    // Horizontal: 640 visibles + 16 front + 96 sync + 48 back = 800
-    // Vertical:   480 visibles + 10 front +  2 sync + 33 back = 525
-    reg [9:0] h_count = 0;
-    reg [9:0] v_count = 0;
-
-    always @(posedge clk_pixel) begin
-        if (h_count == 799) begin h_count <= 0; v_count <= (v_count==524) ? 0 : v_count+1; end
-        else h_count <= h_count + 1;
-
-        hsync <= ~(h_count >= 656 && h_count < 752); // activo en bajo
-        vsync <= ~(v_count >= 490 && v_count < 492); // activo en bajo
-        video_on <= (h_count < 640) && (v_count < 480);
-        pixel_x <= h_count;
-        pixel_y <= v_count;
-    end
-endmodule
-```
-
-El módulo `display_driver.v` completo envuelve esto y además lee del
-framebuffer correspondiente en `(pixel_x, pixel_y)` para sacar el color
-real a mostrar en `r,g,b` cuando `video_on=1` (negro/apagado cuando
-`video_on=0`, es decir, durante el blanking).
+Corre `display_driver_TB.v`: (1) escribe y relee una palabra por el
+puerto CPU del framebuffer para confirmar que el bus llega bien hasta
+la memoria de 128 KB, y (2) confirma que `vga_timing` está generando
+`hsync`/`vsync` (timing vivo). No persigue un píxel exacto dentro del
+escaneo — eso depende de la resolución final del juego, todavía
+provisional (ver nota de arriba).
 
 ## API en C para el Grupo K
 
-```c
-// display.h — el CPU NO controla el timing (eso lo hace el hardware
-// solo), solo escribe en el framebuffer correspondiente a su pantalla.
-#define FB1_BASE 0x00090000
-#define FB2_BASE 0x00094000
-#define FB3_BASE 0x00098000
-#define FB4_BASE 0x0009C000
+El CPU **no controla el timing** (eso lo hace el hardware solo), solo
+escribe en el framebuffer correspondiente a su pantalla. Las
+direcciones están en [`firmware/display.h`](firmware/display.h):
 
-void poner_pixel(unsigned int fb_base, int x, int y, int ancho, unsigned short color) {
-    volatile unsigned short* fb = (volatile unsigned short*)fb_base;
-    fb[y * ancho + x] = color;
-}
+```c
+#define FB1_BASE 0x00480000u
+#define FB2_BASE 0x004A0000u
+#define FB3_BASE 0x004C0000u
+#define FB4_BASE 0x004E0000u
 ```
+
+Las funciones de dibujo reales (`limpiar_pantalla`, `poner_pixel`,
+`dibujar_sprite`, `dibujar_texto`) **no se duplican aquí** — ya están
+declaradas y son compartidas por los 4 juegos en
+[`../../software/grupo_K_juegos/comun/framebuffer.h`](../../software/grupo_K_juegos/comun/framebuffer.h),
+que recibe `fb_base` (una de las 4 macros de arriba) como parámetro.
+`firmware/display.c` en esta carpeta queda como placeholder — ver ese
+archivo.
 
 ## Errores comunes a evitar
 - Sacar el reloj de píxel del reloj del sistema sin pasar por un PLL
@@ -153,12 +194,17 @@ void poner_pixel(unsigned int fb_base, int x, int y, int ancho, unsigned short c
 - Actualizar el framebuffer a mitad de un frame que se está escaneando
   activamente → parpadeo/tearing visible. Si da tiempo en el proyecto,
   usar doble buffer (dibujar en uno mientras se muestra el otro).
-- **Subestimar el tamaño del framebuffer** (ver la nota de arriba sobre
-  460KB a resolución completa) — definir la resolución REAL de cada
-  juego antes de escribir una sola línea de este módulo.
+- **Subestimar el tamaño del framebuffer** (ver la nota de arriba —
+  sigue sin caber un framebuffer a 640×480 color completo aunque la
+  ventana subió a 128 KB) — definir la resolución REAL de cada juego
+  antes de dar por cerrado `FB_WIDTH`/`FB_HEIGHT` en `display_driver.v`.
+- Tratar `framebuffer.v` como si fuera un periférico CSR (`cs`/`rd`/`wr`
+  de un solo registro) — es memoria de dos puertos, igual que la BRAM.
 
 ## Estado
-- [ ] Módulo diseñado
-- [ ] Módulo simulado (testbench)
+- [x] Módulo diseñado (`vga_timing.v`, `framebuffer.v`, `display_driver.v`)
+- [x] Testbench escrito (`display_driver_TB.v`, básico)
+- [ ] Módulo simulado y verificado (correr `make sim`)
 - [ ] Módulo probado en hardware real (Colorlight 5A-75E)
-- [ ] Mapa de registros/memoria documentado (ver arriba)
+- [x] Ventanas de framebuffer documentadas (oficiales, confirmadas)
+- [ ] Resolución final de cada juego (`FB_WIDTH`/`FB_HEIGHT`) — punto de coordinación abierto con Grupo C y Grupo K

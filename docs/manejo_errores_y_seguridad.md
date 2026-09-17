@@ -93,3 +93,64 @@ físico, no solo tolerar en el software:
 - **Mensajes de error, si son necesarios, deben ser visuales y simples**
   (un ícono, no texto técnico) — el usuario objetivo no sabe leer
   mensajes de depuración.
+
+## 5. Autodiagnóstico al arrancar (antes de mostrar el menú)
+
+Antes de que cualquier pantalla llegue a `ESTADO_MENU`, `main.c`
+recorre cada periférico que va a usar esa pantalla (control NES,
+framebuffer/display, audio) y verifica que responda — igual que un PC
+hace POST antes de arrancar el sistema operativo. Esto separa "no
+prendió" de "prendió mal", que son problemas muy distintos de
+diagnosticar para quien esté armando o reparando la consola:
+
+```mermaid
+flowchart TD
+    Inicio(["Encendido de esta pantalla"])
+    T1["Probar NES_Pn\n(¿responde al leer?)"]
+    T2["Probar framebuffer FBn\n(escribir + leer un pixel de prueba)"]
+    T3["Probar canal de audio AUDIOn\n(¿AUDIO_STATUS responde?)"]
+    OK{"¿Los 3 respondieron\ncorrectamente?"}
+    Menu(["ESTADO_MENU"])
+    ErrorArranque(["Pantalla de error de arranque\n(ver sección 6) +\ncódigo de error visible"])
+
+    Inicio --> T1 --> T2 --> T3 --> OK
+    OK -- "Sí" --> Menu
+    OK -- "No" --> ErrorArranque
+```
+
+Este autodiagnóstico reutiliza exactamente el mismo mecanismo de
+aislamiento de fallos de la sección 1: si el problema es solo, por
+ejemplo, el control de la Pantalla 3, únicamente esa pantalla se
+queda en estado de error — las otras 3 arrancan con normalidad.
+
+## 6. Códigos de error estandarizados y pantalla de error crítico
+
+Para que un error (de arranque o durante el juego) sea diagnosticable
+sin depurador ni monitor serial conectado, cada módulo reporta su
+falla con un **código numérico fijo**, mostrado como ícono/número
+simple en pantalla (nunca texto técnico ni traza de pila — ver la
+regla de la sección 4):
+
+| Código | Módulo | Significado |
+|---|---|---|
+| `E1` | Grupo G (control NES) | Control no responde / desconectado |
+| `E2` | Grupo J (pantalla) | Framebuffer no responde |
+| `E3` | Grupo I (audio) | Canal de audio no responde |
+| `E4` | Software (Grupo K) | Watchdog: la tarea del juego se colgó |
+
+- **Error no fatal** (`ErrorControl`, ej. `E1`): la pantalla se queda
+  en un estado visible simple ("control desconectado, código E1") y
+  reintenta automáticamente cuando detecta reconexión — no requiere
+  reiniciar nada (ver sección 2).
+- **Error fatal** (`ErrorFatal`, ej. `E2`/`E3`/`E4`): la pantalla
+  afectada muestra una **pantalla de error crítico** — fondo de un
+  solo color sólido con el código grande y un ícono simple — mientras
+  el watchdog la reinicia sola a `ESTADO_MENU`. Es deliberadamente
+  igual de simple que el resto de la interfaz (sin texto técnico),
+  consistente con que el usuario objetivo son niños que no leen
+  mensajes de depuración.
+
+Esto no cambia el diseño de aislamiento de fallos ya establecido
+(sección 1) — es la forma concreta y visible en que ese aislamiento se
+comunica al usuario, y le da a quien arme/repare la consola una pista
+inmediata de qué módulo revisar sin necesitar un PC conectado.
