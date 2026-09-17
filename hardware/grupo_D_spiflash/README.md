@@ -52,6 +52,77 @@ una vez se sepa el tamaño del bitstream compilado.
   sprites se deben cargar UNA VEZ a BRAM/SPIRAM al iniciar cada juego,
   no leer de flash en cada frame.
 
+## Esqueleto de implementación (mismo patrón que Grupo C, solo lectura)
+
+```verilog
+module spi_flash_ctrl (
+    input  wire        clk, rst,
+    input  wire [23:0] addr,
+    output reg  [31:0] data_out,
+    input  wire        req,
+    output reg         busy,
+    output reg         cs_n, sclk, mosi,
+    input  wire        miso
+);
+    // Igual estructura que spiram_ctrl.v pero SIEMPRE con comando
+    // fijo 0x03 (READ) — nunca 0x02 (WRITE), esta memoria es solo
+    // lectura desde el punto de vista del juego.
+    localparam IDLE=0, XFER=1, DONE=2;
+    reg [1:0] state = IDLE;
+    reg [5:0] bit_count;
+    reg [31:0] shift_out;
+    reg [31:0] shift_in;
+
+    always @(posedge clk) begin
+        if (rst) begin state <= IDLE; cs_n <= 1; busy <= 0; end
+        else case (state)
+            IDLE: if (req) begin
+                cs_n <= 0; busy <= 1;
+                shift_out <= {8'h03, addr};
+                bit_count <= 0; state <= XFER;
+            end
+            XFER: begin
+                sclk <= ~sclk;
+                if (sclk) begin
+                    mosi <= shift_out[31]; shift_out <= {shift_out[30:0], 1'b0};
+                end else begin
+                    shift_in <= {shift_in[30:0], miso};
+                    bit_count <= bit_count + 1;
+                    if (bit_count == 63) state <= DONE; // 32 cmd+addr + 32 datos
+                end
+            end
+            DONE: begin cs_n <= 1; busy <= 0; data_out <= shift_in; state <= IDLE; end
+        endcase
+    end
+endmodule
+```
+
+## API en C para el Grupo K
+
+```c
+// spiflash.h
+#define FLASH_BASE   0x00030000
+#define FLASH_STATUS (*(volatile unsigned int*)0x0003FFFC)
+
+unsigned int flash_read(unsigned int offset) {
+    while (FLASH_STATUS & 0x1) {}
+    return *(volatile unsigned int*)(FLASH_BASE + offset);
+}
+
+// Ejemplo de carga de sprites al iniciar un juego:
+void cargar_sprites(unsigned int offset_flash, unsigned int* destino_ram, int n_palabras) {
+    for (int i = 0; i < n_palabras; i++)
+        destino_ram[i] = flash_read(offset_flash + i*4);
+}
+```
+
+## Errores comunes a evitar
+- Leer directamente de flash dentro del bucle de dibujo de cada frame
+  (es lenta comparada con BRAM) — siempre copiar los sprites a BRAM/RAM
+  una sola vez al iniciar el juego.
+- Pisar la región del bitstream de configuración por no confirmar el
+  offset real donde empiezan los assets.
+
 ## Estado
 - [ ] Módulo diseñado
 - [ ] Módulo simulado (testbench)

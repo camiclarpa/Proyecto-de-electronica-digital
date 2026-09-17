@@ -52,6 +52,82 @@ module spiram_ctrl (
 - El acceso NO es instantáneo: el software debe evitar escribir/leer en
   un bucle apretado esperando cada pixel; conviene escribir en bloques.
 
+## Esqueleto de implementación (máquina de estados real, punto de partida)
+
+```verilog
+module spiram_ctrl (
+    input  wire        clk, rst,
+    input  wire [23:0] addr,
+    input  wire [31:0] data_in,
+    output reg  [31:0] data_out,
+    input  wire        req, we,
+    output reg         busy,
+    output reg         cs_n, sclk, mosi,
+    input  wire        miso
+);
+    localparam IDLE=0, SEND_CMD=1, SEND_ADDR=2, XFER=3, DONE=4;
+    reg [2:0] state = IDLE;
+    reg [5:0] bit_count;
+    reg [39:0] shift_out; // comando(8) + direccion(24) + primer byte de datos
+    reg [31:0] shift_in;
+
+    always @(posedge clk) begin
+        if (rst) begin state <= IDLE; cs_n <= 1; busy <= 0; end
+        else case (state)
+            IDLE: if (req) begin
+                cs_n <= 0; busy <= 1;
+                shift_out <= {we ? 8'h02 : 8'h03, addr, data_in[7:0]};
+                bit_count <= 0; state <= SEND_CMD;
+            end
+            SEND_CMD, SEND_ADDR, XFER: begin
+                sclk <= ~sclk;
+                if (sclk) begin // flanco de bajada: sacar bit
+                    mosi <= shift_out[39];
+                    shift_out <= {shift_out[38:0], 1'b0};
+                end else begin // flanco de subida: capturar bit entrante
+                    shift_in <= {shift_in[30:0], miso};
+                    bit_count <= bit_count + 1;
+                    if (bit_count == 39) state <= DONE;
+                end
+            end
+            DONE: begin
+                cs_n <= 1; busy <= 0; data_out <= shift_in; state <= IDLE;
+            end
+        endcase
+    end
+endmodule
+```
+
+(Simplificado para claridad — falta el manejo real de lectura de 32
+bits completos tras la dirección, que requiere más ciclos de reloj que
+los mostrados; usar como punto de partida, no como implementación
+final.)
+
+## API en C para el Grupo K
+
+```c
+// spiram.h
+#define SPIRAM_BASE   0x00020000
+#define SPIRAM_STATUS (*(volatile unsigned int*)0x0002FFFC)
+
+unsigned int spiram_read(unsigned int addr) {
+    while (SPIRAM_STATUS & 0x1) {} // espera busy == 0
+    return *(volatile unsigned int*)(SPIRAM_BASE + addr);
+}
+void spiram_write(unsigned int addr, unsigned int value) {
+    while (SPIRAM_STATUS & 0x1) {}
+    *(volatile unsigned int*)(SPIRAM_BASE + addr) = value;
+}
+```
+
+## Errores comunes a evitar
+- No respetar `busy`: si el CPU escribe/lee mientras una transacción
+  SPI anterior sigue en curso, se corrompen ambas.
+- Confundir el modo SPI (CPOL/CPHA) del chip real usado — cada
+  fabricante de RAM SPI puede diferir; verificar la hoja de datos del
+  chip específico antes de fijar en qué flanco se envía/captura cada
+  bit.
+
 ## Estado
 - [ ] Módulo diseñado
 - [ ] Módulo simulado (testbench)

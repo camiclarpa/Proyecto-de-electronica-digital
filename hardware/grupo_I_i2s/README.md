@@ -60,6 +60,69 @@ module i2s_tx #(parameter SAMPLE_RATE = 8000, parameter BITS = 16) (
   tablas de muestras en la flash (Grupo D), no calcularse en tiempo
   real — más simple y predecible en tiempo de ejecución.
 
+## Esqueleto de implementación (punto de partida real)
+
+```verilog
+module i2s_tx #(parameter CLK_FREQ = 25000000, parameter SAMPLE_RATE = 8000, parameter BITS = 16) (
+    input  wire clk, rst,
+    output reg  bclk, lrclk, sdata,
+    input  wire signed [BITS-1:0] sample_in,
+    input  wire                    sample_write,
+    output reg                     sample_req
+);
+    localparam integer BCLK_DIV = CLK_FREQ / (SAMPLE_RATE * BITS * 2 * 2);
+    reg [15:0] bclk_count = 0;
+    reg [4:0]  bit_index = 0;
+    reg signed [BITS-1:0] shift_reg;
+
+    always @(posedge clk) begin
+        sample_req <= 0;
+        if (bclk_count == BCLK_DIV-1) begin
+            bclk_count <= 0;
+            bclk <= ~bclk;
+            if (bclk) begin // flanco de bajada de bclk: sacar el siguiente bit
+                sdata <= shift_reg[BITS-1];
+                shift_reg <= shift_reg << 1;
+                bit_index <= bit_index + 1;
+                if (bit_index == BITS-1) begin
+                    lrclk <= ~lrclk; // cambia de canal (o repite si es mono)
+                    sample_req <= 1; // pide la siguiente muestra
+                end
+            end
+        end else bclk_count <= bclk_count + 1;
+
+        if (sample_write) shift_reg <= sample_in;
+    end
+endmodule
+```
+
+## API en C para el Grupo K
+
+```c
+// audio.h
+#define AUDIO1_DATA  (*(volatile int*)0x00080000)
+#define AUDIO2_DATA  (*(volatile int*)0x00080004)
+#define AUDIO3_DATA  (*(volatile int*)0x00080008)
+#define AUDIO4_DATA  (*(volatile int*)0x0008000C)
+#define AUDIO_STATUS (*(volatile unsigned int*)0x00080010)
+
+// Reproducir un efecto pre-grabado (tabla de muestras cargada de flash)
+void reproducir_efecto(volatile int* canal_audio, const short* muestras, int n) {
+    for (int i = 0; i < n; i++) {
+        // idealmente esperar a AUDIO_STATUS antes de escribir cada muestra
+        *canal_audio = muestras[i];
+    }
+}
+```
+
+## Errores comunes a evitar
+- Escribir muestras nuevas más rápido de lo que el hardware las consume
+  (sin respetar `sample_req`/`AUDIO_STATUS`) — produce audio distorsionado
+  o con "clicks".
+- Generar sonido en tiempo real con cálculos pesados dentro del bucle
+  del juego — mejor usar tablas de muestras pre-generadas en la flash
+  (Grupo D) para no afectar el framerate del juego.
+
 ## Estado
 - [ ] Módulo diseñado
 - [ ] Módulo simulado (testbench)

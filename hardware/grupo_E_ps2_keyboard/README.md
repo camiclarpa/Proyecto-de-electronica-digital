@@ -50,6 +50,70 @@ module ps2_keyboard (
   solo entrega el scancode crudo.
 - Uso principal: menú de configuración/depuración, no gameplay.
 
+## Esqueleto de implementación (receptor, punto de partida real)
+
+```verilog
+module ps2_keyboard (
+    input  wire clk, rst,
+    input  wire ps2_clk,   // ya sincronizado/filtrado de metaestabilidad
+    input  wire ps2_data,
+    output reg  [7:0] scancode,
+    output reg          scancode_valid,
+    output reg           key_release
+);
+    reg [3:0] bit_count = 0;
+    reg [10:0] shift_reg;
+    reg ps2_clk_prev;
+    reg pending_release = 0;
+
+    always @(posedge clk) begin
+        scancode_valid <= 0;
+        ps2_clk_prev <= ps2_clk;
+        if (ps2_clk_prev && !ps2_clk) begin // flanco de bajada real del teclado
+            shift_reg <= {ps2_data, shift_reg[10:1]};
+            bit_count <= bit_count + 1;
+            if (bit_count == 10) begin
+                bit_count <= 0;
+                // shift_reg[8:1] = los 8 bits de datos (ya sin start/parity/stop)
+                if (shift_reg[8:1] == 8'hF0) begin
+                    pending_release <= 1; // el SIGUIENTE byte es el que se solto
+                end else begin
+                    scancode <= shift_reg[8:1];
+                    key_release <= pending_release;
+                    pending_release <= 0;
+                    scancode_valid <= 1;
+                end
+            end
+        end
+    end
+endmodule
+```
+
+**Importante**: `ps2_clk` y `ps2_data` vienen de un dispositivo externo
+asíncrono al reloj del sistema — hay que pasarlos primero por 2
+flip-flops de sincronización (doble registro) antes de usarlos aquí,
+para evitar metaestabilidad. Ese sincronizador es un módulo aparte y
+sencillo, pero es indispensable, no opcional.
+
+## API en C para el Grupo K
+
+```c
+// ps2_keyboard.h
+#define KBD_DATA   (*(volatile unsigned int*)0x00040000)
+#define KBD_STATUS (*(volatile unsigned int*)0x00040004)
+
+int kbd_tecla_disponible(void) { return KBD_STATUS & 0x1; }
+unsigned char kbd_leer_scancode(void) { return (unsigned char)(KBD_DATA & 0xFF); }
+int kbd_fue_soltada(void) { return (KBD_DATA >> 8) & 0x1; }
+```
+
+## Errores comunes a evitar
+- No sincronizar `ps2_clk`/`ps2_data` (metaestabilidad) → lecturas
+  fantasma esporádicas, muy difíciles de depurar porque no son
+  reproducibles siempre igual.
+- Olvidar el manejo del prefijo `0xF0` (soltar tecla) — sin esto, el
+  sistema "cree" que una tecla queda presionada para siempre.
+
 ## Estado
 - [ ] Módulo diseñado
 - [ ] Módulo simulado (testbench)

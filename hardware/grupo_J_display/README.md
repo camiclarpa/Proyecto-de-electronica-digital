@@ -75,6 +75,67 @@ primeros puntos de coordinación entre Grupo J, Grupo C y Grupo K.**
   "escanea" continuamente para generar la señal de video (doble buffer
   si se quiere evitar parpadeo, a evaluar según recursos disponibles).
 
+## Esqueleto de implementación (generador de timing VGA real)
+
+```verilog
+module vga_timing (
+    input  wire clk_pixel, // 25 MHz real, desde PLL
+    output reg  hsync, vsync,
+    output reg  video_on,   // 1 cuando esta en la zona visible (no en blanking)
+    output reg  [9:0] pixel_x,
+    output reg  [9:0] pixel_y
+);
+    // Horizontal: 640 visibles + 16 front + 96 sync + 48 back = 800
+    // Vertical:   480 visibles + 10 front +  2 sync + 33 back = 525
+    reg [9:0] h_count = 0;
+    reg [9:0] v_count = 0;
+
+    always @(posedge clk_pixel) begin
+        if (h_count == 799) begin h_count <= 0; v_count <= (v_count==524) ? 0 : v_count+1; end
+        else h_count <= h_count + 1;
+
+        hsync <= ~(h_count >= 656 && h_count < 752); // activo en bajo
+        vsync <= ~(v_count >= 490 && v_count < 492); // activo en bajo
+        video_on <= (h_count < 640) && (v_count < 480);
+        pixel_x <= h_count;
+        pixel_y <= v_count;
+    end
+endmodule
+```
+
+El módulo `display_driver.v` completo envuelve esto y además lee del
+framebuffer correspondiente en `(pixel_x, pixel_y)` para sacar el color
+real a mostrar en `r,g,b` cuando `video_on=1` (negro/apagado cuando
+`video_on=0`, es decir, durante el blanking).
+
+## API en C para el Grupo K
+
+```c
+// display.h — el CPU NO controla el timing (eso lo hace el hardware
+// solo), solo escribe en el framebuffer correspondiente a su pantalla.
+#define FB1_BASE 0x00090000
+#define FB2_BASE 0x00094000
+#define FB3_BASE 0x00098000
+#define FB4_BASE 0x0009C000
+
+void poner_pixel(unsigned int fb_base, int x, int y, int ancho, unsigned short color) {
+    volatile unsigned short* fb = (volatile unsigned short*)fb_base;
+    fb[y * ancho + x] = color;
+}
+```
+
+## Errores comunes a evitar
+- Sacar el reloj de píxel del reloj del sistema sin pasar por un PLL
+  real — 25.175 MHz no es un divisor entero limpio de la mayoría de
+  relojes de FPGA; hay que generarlo con el PLL de la ECP5 (como el
+  ejemplo `pll/` del repo del curso), no con un contador simple.
+- Actualizar el framebuffer a mitad de un frame que se está escaneando
+  activamente → parpadeo/tearing visible. Si da tiempo en el proyecto,
+  usar doble buffer (dibujar en uno mientras se muestra el otro).
+- **Subestimar el tamaño del framebuffer** (ver la nota de arriba sobre
+  460KB a resolución completa) — definir la resolución REAL de cada
+  juego antes de escribir una sola línea de este módulo.
+
 ## Estado
 - [ ] Módulo diseñado
 - [ ] Módulo simulado (testbench)

@@ -40,6 +40,55 @@ module bram (
 |---|---|---|---|
 | `0x00000000` – `0x0000FFFF` | BRAM | R/W | Memoria de trabajo del CPU (código + datos) |
 
+## Esqueleto de implementación (punto de partida real, no pseudocódigo)
+
+```verilog
+module bram (
+    input  wire        clk,
+    input  wire [15:0] addr,
+    input  wire [31:0] data_in,
+    output reg  [31:0] data_out,
+    input  wire        write_enable,
+    input  wire [3:0]  byte_enable
+);
+    reg [7:0] mem0 [0:16383];
+    reg [7:0] mem1 [0:16383];
+    reg [7:0] mem2 [0:16383];
+    reg [7:0] mem3 [0:16383];
+
+    always @(posedge clk) begin
+        if (write_enable) begin
+            if (byte_enable[0]) mem0[addr] <= data_in[7:0];
+            if (byte_enable[1]) mem1[addr] <= data_in[15:8];
+            if (byte_enable[2]) mem2[addr] <= data_in[23:16];
+            if (byte_enable[3]) mem3[addr] <= data_in[31:24];
+        end
+        data_out <= {mem3[addr], mem2[addr], mem1[addr], mem0[addr]};
+    end
+endmodule
+```
+
+Nota: partir la memoria en 4 bancos de 8 bits (uno por byte) es lo que
+permite escribir por byte sin leer-modificar-escribir la palabra
+completa — así funciona de verdad el `SB`/`SH` del RISC-V.
+
+## API en C para el Grupo K
+
+```c
+// bram.h — memoria de trabajo, acceso normal de C (arreglos, punteros)
+// No requiere funciones especiales: el compilador de GCC para RV32I ya
+// genera LW/SW/LB/SB directo sobre estas direcciones porque es memoria
+// mapeada de forma transparente, a diferencia de los periféricos.
+```
+
+## Errores comunes a evitar
+- Olvidar el `byte_enable` y solo soportar `SW` de 32 bits — el
+  compilador de C SÍ genera `SB`/`SH` para variables `char`/`short`,
+  y sin esto el programa falla de forma silenciosa y difícil de
+  depurar.
+- No inicializar la memoria con el programa real al sintetizar (sin
+  esto, el CPU arranca ejecutando basura).
+
 ## Estado
 - [ ] Módulo diseñado
 - [ ] Módulo simulado (testbench)
