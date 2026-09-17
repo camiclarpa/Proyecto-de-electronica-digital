@@ -1,5 +1,10 @@
 # Manejo de errores y seguridad física (producto dirigido a niños)
 
+> Ver también: [`README.md`](README.md) (índice de toda la
+> documentación) y [`decisiones_cerradas.md`](decisiones_cerradas.md)
+> (decisiones de gabinete que aplican directamente estos requisitos:
+> altura y ventilador).
+
 Este documento existe porque el sistema está dirigido a niños, y los
 niños prueban los límites físicos de cualquier cosa (el mismo motivo por
 el que un frasco de shampoo trae instrucciones). Hay que diseñar
