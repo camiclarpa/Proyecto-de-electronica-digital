@@ -1,0 +1,54 @@
+<svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <style>
+    .label { font-size: 14px; fill: #222; }
+    .dim { font-size: 12px; fill: #555; }
+    .title { font-size: 20px; fill: #111; font-weight: bold; }
+  </style>
+
+  <rect x="0" y="0" width="1000" height="620" fill="#ffffff"/>
+  <text x="500" y="30" text-anchor="middle" class="title">Vista interna (corte lateral) — Distribución de componentes</text>
+
+  <!-- Cuerpo del gabinete -->
+  <rect x="60" y="60" width="880" height="440" rx="18" ry="18"
+        fill="none" stroke="#6b4f2a" stroke-width="4"/>
+
+  <!-- Pantallas montadas en el frente -->
+  <rect x="90" y="90" width="60" height="140" fill="#111"/>
+  <text x="120" y="250" text-anchor="middle" class="dim">Pantallas</text>
+
+  <!-- Placa FPGA -->
+  <rect x="220" y="120" width="180" height="90" rx="6" fill="#2ecc71" stroke="#145a32" stroke-width="2"/>
+  <text x="310" y="170" text-anchor="middle" class="label">Colorlight 5A-75E</text>
+  <text x="310" y="190" text-anchor="middle" class="dim">(montada sobre separadores,</text>
+  <text x="310" y="205" text-anchor="middle" class="dim">atornillada, no suelta)</text>
+
+  <!-- Fuente de alimentacion -->
+  <rect x="440" y="120" width="140" height="90" rx="6" fill="#f39c12" stroke="#8a5a00" stroke-width="2"/>
+  <text x="510" y="165" text-anchor="middle" class="label">Fuente 12V</text>
+  <text x="510" y="185" text-anchor="middle" class="dim">(única, 4 pantallas)</text>
+
+  <!-- Canal de cableado -->
+  <rect x="90" y="250" width="700" height="30" fill="#ecf0f1" stroke="#95a5a6" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="440" y="270" text-anchor="middle" class="dim">Canal/conducto de cableado interno (protege los cables de los controles)</text>
+
+  <!-- Conectores de control saliendo del canal hacia el frente -->
+  <line x1="150" y1="280" x2="150" y2="330" stroke="#c0392b" stroke-width="3"/>
+  <line x1="250" y1="280" x2="250" y2="330" stroke="#2980b9" stroke-width="3"/>
+  <line x1="350" y1="280" x2="350" y2="330" stroke="#c0392b" stroke-width="3"/>
+  <line x1="450" y1="280" x2="450" y2="330" stroke="#2980b9" stroke-width="3"/>
+  <text x="300" y="350" text-anchor="middle" class="dim">Cable de uso rudo con alivio de tensión hacia cada control (ver seguridad)</text>
+
+  <!-- Conector de alimentacion trasero -->
+  <rect x="850" y="440" width="40" height="30" fill="#7f8c8d" stroke="#000" stroke-width="2"/>
+  <text x="870" y="490" text-anchor="middle" class="dim">Entrada de</text>
+  <text x="870" y="505" text-anchor="middle" class="dim">alimentación</text>
+  <text x="870" y="520" text-anchor="middle" class="dim">(parte trasera,</text>
+  <text x="870" y="535" text-anchor="middle" class="dim">no accesible</text>
+  <text x="870" y="550" text-anchor="middle" class="dim">al frente)</text>
+
+  <!-- Ventilacion -->
+  <rect x="90" y="440" width="700" height="20" fill="#bdc3c7" stroke="#7f8c8d" stroke-width="2"/>
+  <text x="440" y="475" text-anchor="middle" class="dim">Ventilación pasiva (rejilla con paso menor a 6mm — no entra un dedo)</text>
+
+  <text x="500" y="590" text-anchor="middle" class="dim">Todo el bajo voltaje (12V/5V) queda dentro; la conversión 110V queda fuera, en el adaptador externo sellado</text>
+</svg>

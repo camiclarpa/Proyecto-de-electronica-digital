@@ -1,19 +1,88 @@
 # Gabinete físico de la consola
 
-Carpeta para el diseño mecánico de la caja que aloja las 4 pantallas,
-los 8 controles y la placa de desarrollo.
+Diseño completo del gabinete que aloja las 4 pantallas, los 8 controles
+y la placa de desarrollo — concepto tipo "mesa arcade" (cocktail
+cabinet), pensado para ser construible por el equipo con herramientas
+básicas de taller (sierra, taladro, lijadora).
 
-Requisitos de seguridad obligatorios: ver
-[`docs/manejo_errores_y_seguridad.md`](../../docs/manejo_errores_y_seguridad.md#3-seguridad-eléctrica-y-mecánica-del-gabinete)
-(gabinete cerrado, sin bordes filosos, cableado protegido, bajo voltaje
-accesible únicamente).
+## 1. Concepto y dimensiones
 
-## Contenido esperado
-- [ ] Bocetos/CAD del gabinete
-- [ ] Plano de distribución de las 4 pantallas y 8 controles
-- [ ] Ruteo de cableado interno (canal protegido para los cables de control)
-- [ ] Especificación de la fuente de alimentación única para las 4 pantallas
-- [ ] Solución de control de brillo para las 4 pantallas
+Gabinete tipo mesa, en MDF, con las 4 pantallas en fila sobre la
+superficie superior y 2 estaciones de control por pantalla al frente.
+
+**Dimensiones generales**: 110 cm (ancho) × 55 cm (alto) × 45 cm (fondo,
+estimado — a ajustar según el espacio real que ocupe la placa FPGA + fuente).
+
+| Vista | Archivo |
+|---|---|
+| Vista frontal con cotas | [`vista_frontal.svg`](vista_frontal.svg) |
+| Vista interna (distribución de componentes) | [`vista_interna.svg`](vista_interna.svg) |
+
+## 2. Lista de materiales (BOM) — precios reales de Colombia, verificados donde se indica
+
+| Ítem | Cantidad | Precio unitario (COP) | Subtotal (COP) | Fuente / verificación |
+|---|---|---|---|---|
+| Lámina MDF 9mm, 1.83×2.44 m | 1 | **$80.900** | $80.900 | ✅ Verificado — [Homecenter](https://www.homecenter.com.co/homecenter-co/product/904182/mdf-9mm-183x244-metros/904182/) |
+| Botón arcade 24mm (con microswitch) | 64 (8 por control × 8 controles) | **$3.600** | $230.400 | ✅ Verificado — MercadoLibre Colombia |
+| Pantalla 7" TFT (VGA/AV/HDMI, con driver board) | 4 | **~$150.000** (rango real $115.698–$552.646 según modelo/resolución) | ~$600.000 | ⚠️ Rango real observado en MercadoLibre Colombia — precio exacto depende del modelo elegido, cotizar antes de comprar |
+| CD4021 (shift register, 1 por control) | 8 | ~$4.000 (estimado) | ~$32.000 | ⚠️ Estimado — no se encontró precio exacto en Colombia, verificar en tienda de electrónica local (ej. cerca de la sede) |
+| Cable de uso rudo (para los 8 controles) | ~15 m | ~$2.000/m (estimado) | ~$30.000 | ⚠️ Estimado |
+| Conectores DB9 o similares (1 por control) | 8 | ~$1.500 (estimado) | ~$12.000 | ⚠️ Estimado |
+| Fuente de alimentación 12V (única, para las 4 pantallas) | 1 | ~$40.000 (estimado, según amperaje real necesario) | ~$40.000 | ⚠️ Estimado — depende del consumo real de las 4 pantallas elegidas (sumar sus datasheets) |
+| Bisagras, tornillos, pintura, lija | — | ~$50.000 (estimado) | ~$50.000 | ⚠️ Estimado |
+| **Total estimado** | | | **≈ $1.075.000 COP** | (~US$260 aprox., tasa referencial) |
+
+*(No se incluye la placa Colorlight 5A-75E en este costeo — se asume
+provista por el curso, como las demás carpetas de `hardware/` ya
+asumen.)*
+
+**Nota importante de honestidad**: los ítems marcados ✅ tienen precio
+real verificado a la fecha de esta búsqueda. Los marcados ⚠️ son
+estimaciones razonables basadas en productos similares — **cotizar antes
+de comprar**, los precios de electrónica cambian rápido y varían por
+vendedor.
+
+## 3. Dónde conseguir cada cosa (Bogotá)
+
+- **MDF y herramientas de corte**: Homecenter, Easy, o madereras del
+  barrio Siete de Agosto (cerca de la sede Bogotá de la UNAL).
+- **Botones arcade, pantallas, CD4021**: MercadoLibre Colombia (envío),
+  o tiendas de electrónica en el centro de Bogotá (San Andresito de la
+  38, o el sector de la Avenida Caracas con electrónica al detal).
+- **Placa Colorlight 5A-75E**: la misma que ya usa el curso — no
+  requiere compra adicional si ya la tienen del laboratorio.
+
+## 4. Diseño de cada estación de control
+
+Cada uno de los 8 controles usa el protocolo real documentado en
+[`hardware/grupo_G_nes_controller/README.md`](../../hardware/grupo_G_nes_controller/README.md):
+8 botones arcade (Arriba, Abajo, Izquierda, Derecha, Start, Select, A, B)
+cableados a un **CD4021** (el mismo chip que trae un control de NES
+original por dentro), que convierte los 8 botones en una señal serial
+de 3 líneas (Latch/Clock/Data) hacia la FPGA.
+
+## 5. Requisitos de seguridad (obligatorios, no opcionales)
+
+Ver [`docs/manejo_errores_y_seguridad.md`](../../docs/manejo_errores_y_seguridad.md#3-seguridad-eléctrica-y-mecánica-del-gabinete):
+
+- Gabinete completamente cerrado, sin PCB expuesta.
+- Bordes redondeados (radio mínimo 1.5 cm) en todas las esquinas.
+- Cableado de los controles con alivio de tensión y cable de uso rudo
+  en los tramos expuestos (ver el caso real "el niño pisó el cable").
+- Solo bajo voltaje (12V/5V) dentro del gabinete accesible; la
+  conversión de 110V queda en el adaptador externo, sellado.
+- Ventilación con paso menor a 6mm (no debe entrar un dedo infantil).
+- Conector de alimentación en la parte trasera, no accesible desde
+  donde juegan los niños.
+
+## 6. Contenido pendiente
+- [x] Bocetos/diagrama del gabinete (vista frontal e interna)
+- [x] Plano de distribución de las 4 pantallas y 8 controles
+- [x] Lista de materiales con precios reales/estimados
+- [ ] Ruteo detallado de cableado interno (falta definir largo exacto
+      según las dimensiones finales que se decidan)
+- [ ] Cotización final una vez se elija el modelo exacto de pantalla
+- [ ] Prototipo físico / CAD en software (SketchUp, Fusion 360, o similar)
 
 ## Integrantes responsables
-- 
+-
