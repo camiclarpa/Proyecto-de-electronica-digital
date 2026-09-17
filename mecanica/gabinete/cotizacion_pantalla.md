@@ -31,14 +31,33 @@ Para las **4 pantallas** del proyecto:
 - Si compran por MercadoLibre Colombia el Waveshare (revisar precio real
   iniciando sesión): 4 × precio_ML
 - Si usan la alternativa ELECROW confirmada: **4 × $129.013 ≈ $516.052 COP**
-- **Importante**: el conector VGA que asumió el diseño del Grupo J
-  (`display_driver.v`) requiere el cable adicional específico
-  mencionado por Waveshare — si van a usar HDMI en su lugar (más
-  simple, viene incluido), el Grupo J necesita adaptar su salida de
-  HDMI en vez de VGA. **Esto hay que decidirlo antes de que el Grupo J
-  avance más en su diseño** — HDMI es una interfaz digital serial
-  (TMDS) completamente distinta a VGA (analógica), no es un cambio
-  trivial de última hora.
+
+## ✅ DECISIÓN CERRADA (2026-09-16): HDMI vs VGA
+
+El Grupo J genera **VGA** desde el FPGA (ver la justificación completa
+en
+[`hardware/grupo_J_display/README.md`](../../hardware/grupo_J_display/README.md#función-en-el-proyecto)) —
+más simple y de bajo riesgo con el toolchain 100% open-source del
+curso, comparado con generar 4 salidas HDMI/TMDS reales.
+
+Esto significa que **cada pantalla necesita un convertidor VGA→HDMI**
+si el modelo final comprado (Waveshare o ELECROW) solo acepta HDMI. Es
+un producto real, barato y de venta común:
+
+| Producto | Precio real (COP) |
+|---|---|
+| **Convertidor activo VGA a HDMI** (MercadoLibre Colombia) | **desde $17.850 COP** ✅ (visto en listado real de MercadoLibre Colombia, hoy) |
+
+Para las 4 pantallas: **4 × ~$17.850 ≈ $71.400 COP** adicionales al BOM
+(actualizar la fila de BOM en
+[`README.md`](README.md) para incluirlo).
+
+**Nota**: si al final se consigue el Waveshare puntual (que sí acepta
+VGA nativo con el cable adicional que menciona el fabricante), el
+convertidor no seria necesario para esas unidades — pero como la
+alternativa confirmada que sí llega a Colombia (ELECROW) se vende
+orientada a HDMI, se deja presupuestado el convertidor por pantalla
+como caso general.
 
 ## Actualización al BOM principal
 

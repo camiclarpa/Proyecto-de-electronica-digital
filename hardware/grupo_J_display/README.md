@@ -9,12 +9,33 @@ en una señal de video real que la pantalla pueda mostrar. Es, junto con
 el Grupo G (controles), el módulo más crítico para que el proyecto
 "se vea" funcionando.
 
-**[SUPUESTO — confirmar con el equipo/profesor]**: se asume salida
-**VGA** por ser el estándar más simple y documentado para proyectos de
-FPGA de este tipo (es lo que usan casi todos los cursos universitarios
-de "Pong/Tetris en FPGA"). Si en cambio se van a usar pantallas TFT
-pequeñas por SPI/paralelo (ej. tipo ILI9341), el protocolo cambia por
-completo — avisar apenas se defina el hardware real de pantalla.
+**✅ DECISIÓN CERRADA (2026-09-16): el FPGA genera VGA, no HDMI.**
+
+Se evaluaron las dos opciones reales para la salida de video de las 4
+pantallas:
+
+| Opción | Qué requiere del FPGA | Riesgo real |
+|---|---|---|
+| **VGA (analógica)** ✅ ELEGIDA | Un contador de timing (ver `vga_timing` más abajo, ya escrito) + un DAC resistivo simple (2-4 resistencias por canal de color) en los pines de salida | Bajo — es el estándar que usan casi todos los cursos universitarios de "Pong/Tetris en FPGA", no necesita IP especial |
+| **HDMI (digital, TMDS)** ❌ descartada | 4 transmisores TMDS reales (serializar cada canal a ~250 MHz, 10× el reloj de píxel) — el Colorlight 5A-75E no trae pines diferenciales pensados para esto, y el flujo 100% open-source (Yosys+Nextpnr+Trellis) tiene soporte mucho menos probado para SERDES de alta velocidad que las herramientas propietarias de Lattice | Alto — 4 instancias simultáneas de esto es un proyecto de I+D en sí mismo, no algo razonable en el tiempo del curso |
+
+**Por qué se cierra en VGA:**
+1. El código de timing (`vga_timing`, más abajo) y el mapa de memoria de
+   framebuffers ya están escritos asumiendo VGA — cambiar a HDMI
+   implicaría rehacer esta parte desde cero.
+2. Generar 4 salidas HDMI reales requiere 4 serializadores TMDS de alta
+   velocidad — un riesgo de proyecto innecesario para un curso, y sin
+   garantía de que el toolchain open-source del curso lo soporte de
+   forma confiable a tiempo.
+3. **El problema de que la pantalla comprada (ELECROW, ver
+   [`mecanica/gabinete/cotizacion_pantalla.md`](../../mecanica/gabinete/cotizacion_pantalla.md))
+   solo tenga entrada HDIM se resuelve por fuera del FPGA**: con un
+   convertidor activo VGA→HDMI (dispositivo real y barato, ver esa
+   cotización), en vez de complicar el diseño de hardware del Grupo J.
+
+Si en el futuro se cambia a pantallas TFT pequeñas por SPI/paralelo
+(ej. tipo ILI9341), el protocolo cambiaría por completo — pero esa no
+es la ruta elegida.
 
 ## Protocolo real (asumiendo VGA, 640×480 @ 60 Hz — timing estándar industry)
 

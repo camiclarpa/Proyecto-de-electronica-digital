@@ -32,14 +32,15 @@ estimado — a ajustar según el espacio real que ocupe la placa FPGA + fuente).
 |---|---|---|---|---|
 | Lámina MDF 9mm, 1.83×2.44 m | 1 | **$80.900** | $80.900 | ✅ Verificado — [Homecenter](https://www.homecenter.com.co/homecenter-co/product/904182/mdf-9mm-183x244-metros/904182/) |
 | Botón arcade 24mm (con microswitch) | 64 (8 por control × 8 controles) | **$3.600** | $230.400 | ✅ Verificado — MercadoLibre Colombia |
-| Pantalla 7" IPS táctil (Waveshare HDMI/VGA o equivalente) | 4 | **US$47.99** (Waveshare oficial) / **$129.013 COP** (alternativa ELECROW real con envío a Colombia) | ~$516.052 COP (con ELECROW) | ✅ Verificado — ver [`cotizacion_pantalla.md`](cotizacion_pantalla.md) para el detalle completo y la decisión pendiente HDMI vs VGA |
+| Pantalla 7" IPS táctil (Waveshare HDMI/VGA o equivalente) | 4 | **US$47.99** (Waveshare oficial) / **$129.013 COP** (alternativa ELECROW real con envío a Colombia) | ~$516.052 COP (con ELECROW) | ✅ Verificado — ver [`cotizacion_pantalla.md`](cotizacion_pantalla.md) |
+| **Convertidor VGA a HDMI** (1 por pantalla) | 4 | **~$17.850** | ~$71.400 | ✅ Verificado — ver [`cotizacion_pantalla.md`](cotizacion_pantalla.md), decisión HDMI vs VGA cerrada 2026-09-16 |
 | CD4021 (shift register, 1 por control) | 8 | ~$4.000 (estimado) | ~$32.000 | ⚠️ Estimado — no se encontró precio exacto en Colombia, verificar en tienda de electrónica local (ej. cerca de la sede) |
 | Cable de uso rudo (para los 8 controles) | ~15 m | ~$2.000/m (estimado) | ~$30.000 | ⚠️ Estimado |
 | Conectores DB9 o similares (1 por control) | 8 | ~$1.500 (estimado) | ~$12.000 | ⚠️ Estimado |
 | Fuente de alimentación 12V (única, para las 4 pantallas) | 1 | ~$40.000 (estimado, según amperaje real necesario) | ~$40.000 | ⚠️ Estimado — depende del consumo real de las 4 pantallas elegidas (sumar sus datasheets) |
 | **Ventilador 12V 40-60mm con rejilla de protección** | 1 | ~$20.000 (estimado) | ~$20.000 | ⚠️ Estimado — ver [`disipacion_termica/README.md`](disipacion_termica/README.md), decisión cerrada 2026-09-16 |
 | Bisagras, tornillos, pintura, lija | — | ~$50.000 (estimado) | ~$50.000 | ⚠️ Estimado |
-| **Total estimado** | | | **≈ $1.011.000 COP** | (~US$245 aprox., tasa referencial) |
+| **Total estimado** | | | **≈ $1.082.000 COP** | (~US$264 aprox., tasa referencial) |
 
 *(No se incluye la placa Colorlight 5A-75E en este costeo — se asume
 provista por el curso, como las demás carpetas de `hardware/` ya
