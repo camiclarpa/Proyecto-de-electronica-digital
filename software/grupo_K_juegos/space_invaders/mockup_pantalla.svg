@@ -1,0 +1,115 @@
+<svg viewBox="0 0 900 640" xmlns="http://www.w3.org/2000/svg" font-family="Consolas, 'Courier New', monospace">
+  <defs>
+    <linearGradient id="bgSI" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050d06"/>
+      <stop offset="100%" stop-color="#020402"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="640" fill="url(#bgSI)"/>
+
+  <text x="450" y="34" text-anchor="middle" fill="#e8ffe9" font-size="20" font-weight="bold">Mockup — Pantalla de Space Invaders</text>
+  <text x="450" y="56" text-anchor="middle" fill="#5f8f63" font-size="13">Estructura de la pantalla, no arte final. Resolución real: ver hardware/grupo_J_display/README.md</text>
+
+  <!-- Marco -->
+  <rect x="110" y="90" width="560" height="420" rx="6" fill="#020703" stroke="#39ff14" stroke-width="3"/>
+
+  <!-- HUD -->
+  <text x="130" y="118" fill="#39ff14" font-size="16" font-weight="bold">PUNTAJE 01240</text>
+  <text x="655" y="118" text-anchor="end" fill="#39ff14" font-size="16" font-weight="bold">VIDAS 3</text>
+
+  <!-- Formacion de enemigos: 5 filas x 8 columnas -->
+  <g id="enemigos">
+    <!-- filas generadas manualmente para el mockup -->
+    <!-- fila 1 -->
+    <rect x="140" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="170" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="200" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="230" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="260" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="290" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="320" y="150" width="16" height="12" fill="#39ff14"/>
+    <rect x="350" y="150" width="16" height="12" fill="#39ff14"/>
+    <!-- fila 2 -->
+    <rect x="140" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="170" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="200" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="230" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="260" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="290" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="320" y="175" width="16" height="12" fill="#39ff14"/>
+    <rect x="350" y="175" width="16" height="12" fill="#39ff14"/>
+    <!-- fila 3 (uno destruido, "vivo=0") -->
+    <rect x="140" y="200" width="16" height="12" fill="#39ff14"/>
+    <rect x="170" y="200" width="16" height="12" fill="#39ff14"/>
+    <rect x="200" y="200" width="16" height="12" fill="#1a3a1c" stroke="#274d2a" stroke-dasharray="2,2"/>
+    <rect x="230" y="200" width="16" height="12" fill="#39ff14"/>
+    <rect x="260" y="200" width="16" height="12" fill="#39ff14"/>
+    <rect x="290" y="200" width="16" height="12" fill="#39ff14"/>
+    <rect x="320" y="200" width="16" height="12" fill="#39ff14"/>
+    <rect x="350" y="200" width="16" height="12" fill="#39ff14"/>
+    <!-- fila 4 -->
+    <rect x="140" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="170" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="200" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="230" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="260" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="290" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="320" y="225" width="16" height="12" fill="#39ff14"/>
+    <rect x="350" y="225" width="16" height="12" fill="#39ff14"/>
+    <!-- fila 5 -->
+    <rect x="140" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="170" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="200" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="230" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="260" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="290" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="320" y="250" width="16" height="12" fill="#39ff14"/>
+    <rect x="350" y="250" width="16" height="12" fill="#39ff14"/>
+  </g>
+
+  <!-- Proyectil de un enemigo bajando -->
+  <line x1="228" y1="212" x2="228" y2="340" stroke="#ff5d5d" stroke-width="3" stroke-dasharray="6,6"/>
+
+  <!-- Proyectil del jugador subiendo -->
+  <line x1="400" y1="440" x2="400" y2="270" stroke="#c8ffce" stroke-width="3" stroke-dasharray="6,6"/>
+
+  <!-- Nave del jugador -->
+  <polygon points="400,455 385,478 415,478" fill="#39ff14"/>
+
+  <!-- Linea de "peligro" (si un enemigo la cruza, derrota inmediata) -->
+  <line x1="120" y1="440" x2="660" y2="440" stroke="#7a3a3a" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+  <!-- ====== Callouts ====== -->
+  <line x1="360" y1="156" x2="740" y2="130" stroke="#8fae8f" stroke-width="1.2"/>
+  <circle cx="740" cy="130" r="3" fill="#8fae8f"/>
+  <text x="750" y="134" fill="#e8ffe9" font-size="13" font-weight="bold">1. Formación de enemigos</text>
+  <text x="750" y="150" fill="#8fae8f" font-size="11">GridEnemigos[5][8], se mueve en bloque</text>
+
+  <line x1="208" y1="206" x2="740" y2="190" stroke="#8fae8f" stroke-width="1.2"/>
+  <circle cx="740" cy="190" r="3" fill="#8fae8f"/>
+  <text x="750" y="194" fill="#e8ffe9" font-size="13" font-weight="bold">2. Enemigo destruido</text>
+  <text x="750" y="210" fill="#8fae8f" font-size="11">Enemigo.vivo = 0 (hueco en la formación)</text>
+
+  <line x1="228" y1="280" x2="740" y2="250" stroke="#8fae8f" stroke-width="1.2"/>
+  <circle cx="740" cy="250" r="3" fill="#8fae8f"/>
+  <text x="750" y="254" fill="#e8ffe9" font-size="13" font-weight="bold">3. Proyectil enemigo</text>
+  <text x="750" y="270" fill="#8fae8f" font-size="11">Proyectil.vy &gt; 0 (baja)</text>
+
+  <line x1="400" y1="350" x2="740" y2="330" stroke="#8fae8f" stroke-width="1.2"/>
+  <circle cx="740" cy="330" r="3" fill="#8fae8f"/>
+  <text x="750" y="334" fill="#e8ffe9" font-size="13" font-weight="bold">4. Proyectil jugador</text>
+  <text x="750" y="350" fill="#8fae8f" font-size="11">Proyectil.vy &lt; 0 (sube)</text>
+
+  <line x1="415" y1="465" x2="740" y2="400" stroke="#8fae8f" stroke-width="1.2"/>
+  <circle cx="740" cy="400" r="3" fill="#8fae8f"/>
+  <text x="750" y="404" fill="#e8ffe9" font-size="13" font-weight="bold">5. Nave del jugador</text>
+  <text x="750" y="420" fill="#8fae8f" font-size="11">Jugador.x — NES: Izq/Der + A dispara</text>
+
+  <line x1="600" y1="440" x2="740" y2="460" stroke="#8fae8f" stroke-width="1.2"/>
+  <circle cx="740" cy="460" r="3" fill="#8fae8f"/>
+  <text x="750" y="464" fill="#e8ffe9" font-size="13" font-weight="bold">6. Línea de peligro</text>
+  <text x="750" y="480" fill="#8fae8f" font-size="11">si un enemigo la cruza → derrota</text>
+
+  <text x="450" y="620" text-anchor="middle" fill="#3d5a3f" font-size="12">Resolución y proporciones ilustrativas — la resolución real depende de lo que quepa en BRAM (ver hardware/grupo_J_display/README.md)</text>
+</svg>

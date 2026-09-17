@@ -1,0 +1,86 @@
+<svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" font-family="Consolas, 'Courier New', monospace">
+  <defs>
+    <linearGradient id="bgPong" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0e17"/>
+      <stop offset="100%" stop-color="#040609"/>
+    </linearGradient>
+    <marker id="arrowPong" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#8fa3b8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="620" fill="url(#bgPong)"/>
+
+  <text x="450" y="34" text-anchor="middle" fill="#e8f6ff" font-size="20" font-weight="bold">Mockup — Pantalla de Pong</text>
+  <text x="450" y="56" text-anchor="middle" fill="#7c8ea3" font-size="13">Estructura de la pantalla, no arte final. Resolución real: ver hardware/grupo_J_display/README.md</text>
+
+  <!-- Bisel / marco de la pantalla -->
+  <rect x="110" y="90" width="560" height="380" rx="6" fill="#050810" stroke="#00e5ff" stroke-width="3"/>
+
+  <!-- Marcador -->
+  <text x="390" y="130" text-anchor="end" fill="#00e5ff" font-size="34" font-weight="bold">03</text>
+  <text x="390" y="130" fill="#4a5a6b" font-size="34" font-weight="bold" dx="6">:</text>
+  <text x="470" y="130" fill="#00e5ff" font-size="34" font-weight="bold">02</text>
+
+  <!-- Linea central punteada -->
+  <line x1="390" y1="150" x2="390" y2="450" stroke="#274357" stroke-width="3" stroke-dasharray="10,10"/>
+
+  <!-- Paleta jugador 1 -->
+  <rect x="130" y="230" width="12" height="70" fill="#00e5ff"/>
+  <!-- Paleta jugador 2 -->
+  <rect x="648" y="180" width="12" height="70" fill="#00e5ff"/>
+
+  <!-- Pelota + vector de velocidad -->
+  <rect x="410" y="260" width="12" height="12" fill="#ffffff"/>
+  <line x1="422" y1="266" x2="460" y2="245" stroke="#ffffff" stroke-width="2" marker-end="url(#arrowPong)"/>
+
+  <!-- Bordes superior/inferior (rebote) -->
+  <line x1="110" y1="92" x2="670" y2="92" stroke="#274357" stroke-width="2"/>
+  <line x1="110" y1="468" x2="670" y2="468" stroke="#274357" stroke-width="2"/>
+
+  <!-- ====== Callouts (etiquetas jerárquicas, de arriba hacia abajo) ====== -->
+
+  <!-- 1. Marcador -->
+  <line x1="430" y1="120" x2="740" y2="100" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="740" cy="100" r="3" fill="#7c8ea3"/>
+  <text x="750" y="104" fill="#dfe9f2" font-size="13" font-weight="bold">1. Marcador</text>
+  <text x="750" y="120" fill="#7c8ea3" font-size="11">EstadoPong.puntaje1 / puntaje2</text>
+
+  <!-- 2. Borde de rebote -->
+  <line x1="500" y1="92" x2="740" y2="150" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="740" cy="150" r="3" fill="#7c8ea3"/>
+  <text x="750" y="154" fill="#dfe9f2" font-size="13" font-weight="bold">2. Borde superior/inferior</text>
+  <text x="750" y="170" fill="#7c8ea3" font-size="11">rebote: invierte Pelota.vy</text>
+
+  <!-- 3. Paleta jugador 2 -->
+  <line x1="660" y1="215" x2="740" y2="215" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="740" cy="215" r="3" fill="#7c8ea3"/>
+  <text x="750" y="219" fill="#dfe9f2" font-size="13" font-weight="bold">3. Paleta jugador 2</text>
+  <text x="750" y="235" fill="#7c8ea3" font-size="11">EstadoPong.jugador2 — NES_P2</text>
+
+  <!-- 4. Pelota -->
+  <line x1="422" y1="272" x2="740" y2="280" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="740" cy="280" r="3" fill="#7c8ea3"/>
+  <text x="750" y="284" fill="#dfe9f2" font-size="13" font-weight="bold">4. Pelota</text>
+  <text x="750" y="300" fill="#7c8ea3" font-size="11">EstadoPong.pelota (x,y,vx,vy)</text>
+
+  <!-- 5. Paleta jugador 1 -->
+  <line x1="142" y1="265" x2="120" y2="500" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="120" cy="500" r="3" fill="#7c8ea3"/>
+  <text x="130" y="504" fill="#dfe9f2" font-size="13" font-weight="bold">5. Paleta jugador 1</text>
+  <text x="130" y="520" fill="#7c8ea3" font-size="11">EstadoPong.jugador1 — NES_P1</text>
+
+  <!-- 6. Linea central -->
+  <line x1="390" y1="400" x2="390" y2="500" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="390" cy="500" r="3" fill="#7c8ea3"/>
+  <text x="330" y="520" text-anchor="middle" fill="#dfe9f2" font-size="13" font-weight="bold">6. Línea central</text>
+  <text x="330" y="536" text-anchor="middle" fill="#7c8ea3" font-size="11">decorativa, sin lógica asociada</text>
+
+  <!-- 7. Área de juego -->
+  <line x1="670" y1="400" x2="740" y2="460" stroke="#7c8ea3" stroke-width="1.2"/>
+  <circle cx="740" cy="460" r="3" fill="#7c8ea3"/>
+  <text x="750" y="464" fill="#dfe9f2" font-size="13" font-weight="bold">7. Área de juego</text>
+  <text x="750" y="480" fill="#7c8ea3" font-size="11">= framebuffer FBn de esta pantalla</text>
+
+  <text x="450" y="600" text-anchor="middle" fill="#4a5a6b" font-size="12">Resolución y proporciones ilustrativas — la resolución real depende de lo que quepa en BRAM (ver hardware/grupo_J_display/README.md)</text>
+</svg>

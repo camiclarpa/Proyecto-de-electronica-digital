@@ -32,17 +32,32 @@ software/grupo_K_juegos/
 │   └── Makefile                 — como se compilan y enlazan main.c + el juego activo en un solo .elf para el RISC-V
 ├── pong/
 │   ├── pong.h                   — declara que pong implementa InterfazJuego
-│   └── README.md
+│   ├── entidades_pong.h          — Paleta, Pelota, EstadoPong (estructuras internas)
+│   ├── mockup_pantalla.svg       — mockup visual de la pantalla de Pong
+│   └── README.md                 — diagramas de bloques y de flujo específicos de Pong
 ├── space_invaders/
 │   ├── space_invaders.h
+│   ├── entidades_space_invaders.h
+│   ├── mockup_pantalla.svg
 │   └── README.md
 ├── snake/
 │   ├── snake.h
+│   ├── entidades_snake.h
+│   ├── mockup_pantalla.svg
 │   └── README.md
 └── carrito/
     ├── carrito.h
+    ├── entidades_carrito.h
+    ├── mockup_pantalla.svg
     └── README.md
 ```
+
+Cada `README.md` de juego (arriba) profundiza con: sus entidades y
+controles, un **diagrama de bloques** (arquitectura interna) y un
+**diagrama de flujo** (lógica específica de ese juego dentro de
+`ESTADO_JUGANDO`, con simbología estándar: óvalo=inicio/fin,
+paralelogramo=entrada/salida, rectángulo=proceso, rombo=decisión), y un
+mockup visual de cómo se va a ver esa pantalla.
 
 ## Cómo un juego "se conecta" al sistema (sin escribir su lógica todavía)
 
