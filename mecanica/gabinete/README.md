@@ -78,10 +78,28 @@ Ver [`docs/manejo_errores_y_seguridad.md`](../../docs/manejo_errores_y_seguridad
 - Conector de alimentación en la parte trasera, no accesible desde
   donde juegan los niños.
 
-## 6. Contenido pendiente
+## 6. Subcarpetas de diseño detallado
+
+| Tema | Carpeta | Hallazgo real más importante |
+|---|---|---|
+| Aprovechamiento de la lámina de MDF | [`plano_de_corte/`](plano_de_corte/README.md) | 1 sola lámina alcanza para las 7 piezas (30.950 de 44.652 cm² disponibles) |
+| Altura y ángulo pensados para niños | [`ergonomia_infantil/`](ergonomia_infantil/README.md) | Los 55 cm actuales asumen uso sentado — si el uso real es de pie (más probable en un mueble arcade), **hay que subir a ~75 cm** |
+| Cálculo de calor y ventilación | [`disipacion_termica/`](disipacion_termica/README.md) | ~22W estimados superan el límite cómodo de ventilación pasiva (~10-15W) — **se recomienda agregar un ventilador de 12V** |
+| Cómo fijar las 4 pantallas | [`montaje_pantallas/`](montaje_pantallas/README.md) | Mantener la carcasa de fábrica de cada pantalla y atornillarla desde atrás — no desmontar el panel |
+| Nombre, colores y gráficas del producto | [`identidad_visual/`](identidad_visual/README.md) | Propuesta de nombre y paleta de colores, pendiente de que el equipo decida |
+
+## 7. Contenido pendiente
 - [x] Bocetos/diagrama del gabinete (vista frontal e interna)
 - [x] Plano de distribución de las 4 pantallas y 8 controles
 - [x] Lista de materiales con precios reales/estimados
+- [x] Plano de corte de la lámina de MDF
+- [x] Análisis de ergonomía infantil (con hallazgo pendiente de decidir)
+- [x] Cálculo de disipación térmica (con recomendación de ventilador)
+- [x] Método de montaje de las pantallas
+- [x] Propuesta de identidad visual
+- [ ] **Decisión pendiente del equipo**: ¿55cm (sentado) o ~75cm (de
+      pie)? Esto obliga a actualizar `vista_frontal.svg`,
+      `vista_interna.svg` y el plano de corte si cambia.
 - [ ] Ruteo detallado de cableado interno (falta definir largo exacto
       según las dimensiones finales que se decidan)
 - [ ] Cotización final una vez se elija el modelo exacto de pantalla
