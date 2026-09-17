@@ -12,10 +12,11 @@ Se eligió esta placa (en vez de diseñar 4 controladores independientes)
 porque:
 - Es la que el curso ya soporta con toolchain y ejemplos funcionando.
 - Permite compartir un solo CPU entre los 4 juegos mediante multiplexado
-  por software (cada juego corre su lógica en un slot de tiempo, o cada
-  uno como una tarea independiente si el diseño final usa un esquema
-  cooperativo/tiempo compartido — a definir con más detalle en la fase
-  de diseño del Grupo K).
+  por software. **Decisión cerrada (Grupo K, 2026-09-16)**: round-robin
+  cooperativo — el bucle principal avanza cada juego "un cuadro" por
+  turno, sin cambio de contexto real entre tareas. Detalle completo y
+  justificación en
+  [`software/grupo_K_juegos/README.md`](../software/grupo_K_juegos/README.md#sobre-el-multiplexado-entre-las-4-pantallas).
 
 ## Máquina de estados general de un juego (ejemplo: Pong)
 
