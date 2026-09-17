@@ -13,10 +13,13 @@ superficie superior y 2 estaciones de control por pantalla al frente.
 **Dimensiones generales**: 110 cm (ancho) × 55 cm (alto) × 45 cm (fondo,
 estimado — a ajustar según el espacio real que ocupe la placa FPGA + fuente).
 
-| Vista | Archivo |
-|---|---|
-| Vista frontal con cotas | [`vista_frontal.svg`](vista_frontal.svg) |
-| Vista interna (distribución de componentes) | [`vista_interna.svg`](vista_interna.svg) |
+### Vista frontal
+
+<img src="vista_frontal.svg" width="900" alt="Vista frontal del gabinete con las 4 pantallas y 8 controles">
+
+### Vista interna (distribución de componentes)
+
+<img src="vista_interna.svg" width="900" alt="Vista interna del gabinete con FPGA, fuente y canal de cableado">
 
 ## 2. Lista de materiales (BOM) — precios reales de Colombia, verificados donde se indica
 
@@ -24,13 +27,13 @@ estimado — a ajustar según el espacio real que ocupe la placa FPGA + fuente).
 |---|---|---|---|---|
 | Lámina MDF 9mm, 1.83×2.44 m | 1 | **$80.900** | $80.900 | ✅ Verificado — [Homecenter](https://www.homecenter.com.co/homecenter-co/product/904182/mdf-9mm-183x244-metros/904182/) |
 | Botón arcade 24mm (con microswitch) | 64 (8 por control × 8 controles) | **$3.600** | $230.400 | ✅ Verificado — MercadoLibre Colombia |
-| Pantalla 7" TFT (VGA/AV/HDMI, con driver board) | 4 | **~$150.000** (rango real $115.698–$552.646 según modelo/resolución) | ~$600.000 | ⚠️ Rango real observado en MercadoLibre Colombia — precio exacto depende del modelo elegido, cotizar antes de comprar |
+| Pantalla 7" IPS táctil (Waveshare HDMI/VGA o equivalente) | 4 | **US$47.99** (Waveshare oficial) / **$129.013 COP** (alternativa ELECROW real con envío a Colombia) | ~$516.052 COP (con ELECROW) | ✅ Verificado — ver [`cotizacion_pantalla.md`](cotizacion_pantalla.md) para el detalle completo y la decisión pendiente HDMI vs VGA |
 | CD4021 (shift register, 1 por control) | 8 | ~$4.000 (estimado) | ~$32.000 | ⚠️ Estimado — no se encontró precio exacto en Colombia, verificar en tienda de electrónica local (ej. cerca de la sede) |
 | Cable de uso rudo (para los 8 controles) | ~15 m | ~$2.000/m (estimado) | ~$30.000 | ⚠️ Estimado |
 | Conectores DB9 o similares (1 por control) | 8 | ~$1.500 (estimado) | ~$12.000 | ⚠️ Estimado |
 | Fuente de alimentación 12V (única, para las 4 pantallas) | 1 | ~$40.000 (estimado, según amperaje real necesario) | ~$40.000 | ⚠️ Estimado — depende del consumo real de las 4 pantallas elegidas (sumar sus datasheets) |
 | Bisagras, tornillos, pintura, lija | — | ~$50.000 (estimado) | ~$50.000 | ⚠️ Estimado |
-| **Total estimado** | | | **≈ $1.075.000 COP** | (~US$260 aprox., tasa referencial) |
+| **Total estimado** | | | **≈ $991.000 COP** | (~US$240 aprox., tasa referencial — actualizado con el precio real de pantalla) |
 
 *(No se incluye la placa Colorlight 5A-75E en este costeo — se asume
 provista por el curso, como las demás carpetas de `hardware/` ya
